@@ -1375,6 +1375,48 @@ select {
   line-height: 1.45;
 }
 
+.scramble-built {
+  min-height: 2.2em;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(14, 61, 77, 0.06);
+  margin: 8px 0;
+  font-size: 1.15rem;
+}
+
+.scramble-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.scramble-word {
+  width: auto !important;
+}
+
+.skill-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.skill-bars li {
+  display: grid;
+  grid-template-columns: 90px 1fr 28px;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.skill-bars em {
+  font-style: normal;
+  color: var(--ink-soft);
+  text-align: right;
+}
+
 .tabbar button {
   background: transparent;
   border: 0;

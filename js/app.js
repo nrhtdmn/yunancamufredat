@@ -688,6 +688,38 @@ const App = (() => {
       trainerQ = null;
       return;
     }
+    if (mode === "exam") {
+      challengeQueue = shuffle(EXTRAS2.examBank).slice(0, 20).map((item, i) => ({
+        kind: "exam",
+        prompt: item.q,
+        sub: `Soru ${i + 1}/20 · ${item.kind}`,
+        answer: item.options[item.a],
+        options: item.options,
+        speak: item.options[item.a],
+        input: false,
+        exam: true
+      }));
+      challengeIndex = 0;
+      trainerQ = challengeQueue[0];
+      trainerScore = { ok: 0, n: 0 };
+      return;
+    }
+    if (mode === "scramble") {
+      const item = EXTRAS2.scramble[Math.floor(Math.random() * EXTRAS2.scramble.length)];
+      trainerQ = {
+        kind: "scramble",
+        prompt: item.tr,
+        sub: "Kelimeleri doğru sıraya diz (dokunarak ekle)",
+        answer: item.answer,
+        pool: shuffle(item.words.slice()),
+        built: [],
+        options: null,
+        speak: item.answer,
+        input: false,
+        scramble: true
+      };
+      return;
+    }
     if (mode === "review") {
       const wrongs = Progress.load().wrongQueue || [];
       if (!wrongs.length) {
@@ -988,6 +1020,34 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "reflexive") {
+      const item = EXTRAS2.reflexive[Math.floor(Math.random() * EXTRAS2.reflexive.length)];
+      const wrong = shuffle(EXTRAS2.reflexive.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "reflexive",
+        prompt: item.tr,
+        sub: "Dönüşlü / orta çatı fiil?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "polite") {
+      const item = EXTRAS2.polite[Math.floor(Math.random() * EXTRAS2.polite.length)];
+      const wrong = shuffle(EXTRAS2.polite.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "polite",
+        prompt: item.tr,
+        sub: "Nazik ifade?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -1039,6 +1099,10 @@ const App = (() => {
     months: "Ay / mevsim",
     weekdays: "Haftanın günleri",
     genitive: "Genitif",
+    reflexive: "Dönüşlü fiil",
+    polite: "Nazik üslup",
+    scramble: "Cümle kur",
+    exam: "Mini sınav",
     match: "Eşleştir",
     review: "Yanlış tekrarı",
     dialogue: "Diyalog",
@@ -1173,16 +1237,41 @@ const App = (() => {
       return w;
     }
 
-    if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode === "challenge" ? "verb" : trainerMode);
+    if (trainerMode === "exam" && challengeIndex >= challengeQueue.length) {
+      Progress.bumpTrainer("exam");
+      const pct = Math.round((trainerScore.ok / Math.max(1, trainerScore.n)) * 100);
+      const w = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card">
+        <p class="brand-mark">Mini sınav</p>
+        <h1>${trainerScore.ok}/20 · %${pct}</h1>
+        <p class="lede">${pct >= 70 ? "İyi bant. Haftalık tekrarla." : "Yanlış tekrarını aç, zayıf türleri ez."}</p>
+        <button class="btn btn-primary" id="train-exit">Bugün’e dön</button>
+        <button class="btn btn-ghost" id="again">Tekrar sınav</button>
+      </div></div>`);
+      w.querySelector("#train-exit").onclick = () => {
+        trainerMode = null;
+        view = "today";
+        render();
+      };
+      w.querySelector("#again").onclick = () => {
+        startTrainer("exam");
+        render();
+      };
+      return w;
+    }
+
+    if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode === "challenge" || trainerMode === "exam" ? "verb" : trainerMode);
     const title =
       trainerMode === "challenge"
         ? `Challenge ${challengeIndex + 1}/10`
-        : TRAINER_TITLES[trainerMode] || "Antrenman";
+        : trainerMode === "exam"
+          ? `Sınav ${challengeIndex + 1}/20`
+          : TRAINER_TITLES[trainerMode] || "Antrenman";
     const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
       <p class="eyebrow">${escapeHtml(title)} · ${trainerScore.ok}/${trainerScore.n}</p>
-      <h1 class="diag-q ${trainerQ.kind === "number" || trainerQ.kind === "aspect" || trainerQ.kind === "translate" || trainerQ.kind === "time" ? "" : "greek-line"}">${escapeHtml(trainerQ.prompt)}</h1>
+      <h1 class="diag-q ${trainerQ.kind === "number" || trainerQ.kind === "aspect" || trainerQ.kind === "translate" || trainerQ.kind === "time" || trainerQ.kind === "exam" || trainerQ.kind === "scramble" ? "" : "greek-line"}">${escapeHtml(trainerQ.prompt)}</h1>
       <p class="lede center-soft">${escapeHtml(trainerQ.sub)}</p>
       ${trainerQ.hint && trainerFeedback ? `<p class="meta center-soft">${escapeHtml(trainerQ.hint)}</p>` : ""}
+      ${trainerQ.scramble ? `<p class="scramble-built greek-line" id="built">${escapeHtml((trainerQ.built || []).join(" ") || "…")}</p>` : ""}
       <button type="button" class="btn btn-ghost" id="say-q">♪ Dinle</button>
       <div class="diag-opts" id="opts"></div>
       ${trainerFeedback ? `<p class="feedback ${trainerFeedback.ok ? "ok" : "bad"}">${escapeHtml(trainerFeedback.msg)}</p><button class="btn btn-primary" id="next">Sonraki</button>` : ""}
@@ -1197,8 +1286,8 @@ const App = (() => {
     const finish = (ok, msg) => {
       trainerScore.n++;
       if (ok) trainerScore.ok++;
-      if (trainerMode !== "challenge") Progress.bumpTrainer(trainerMode);
-      else Progress.bumpTrainer(trainerQ.kind);
+      if (trainerMode === "challenge" || trainerMode === "exam") Progress.bumpTrainer(trainerQ.kind || trainerMode);
+      else Progress.bumpTrainer(trainerMode);
       if (!ok) {
         Progress.pushWrong({
           prompt: trainerQ.prompt,
@@ -1214,7 +1303,34 @@ const App = (() => {
     };
 
     if (!trainerFeedback) {
-      if (trainerQ.input) {
+      if (trainerQ.scramble) {
+        const poolWrap = el(`<div class="scramble-pool"></div>`);
+        (trainerQ.pool || []).forEach((word, idx) => {
+          const b = el(`<button type="button" class="btn diag-opt scramble-word">${escapeHtml(word)}</button>`);
+          b.addEventListener("click", () => {
+            trainerQ.built = trainerQ.built || [];
+            trainerQ.built.push(word);
+            trainerQ.pool.splice(idx, 1);
+            if (!trainerQ.pool.length) {
+              const ok = normalizeGreek(trainerQ.built.join(" ")) === normalizeGreek(trainerQ.answer);
+              finish(ok, ok ? "Doğru." : `Yanlış. Doğru: ${trainerQ.answer}`);
+            } else {
+              render();
+            }
+          });
+          poolWrap.appendChild(b);
+        });
+        const undo = el(`<button type="button" class="btn btn-ghost">Geri al</button>`);
+        undo.addEventListener("click", () => {
+          if (trainerQ.built && trainerQ.built.length) {
+            const w = trainerQ.built.pop();
+            trainerQ.pool.push(w);
+            render();
+          }
+        });
+        wrap.querySelector("#opts").appendChild(poolWrap);
+        wrap.querySelector("#opts").appendChild(undo);
+      } else if (trainerQ.input) {
         const form = el(`<form class="dict-form"><input name="ans" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Yunanca yaz…" required /><button class="btn btn-primary" type="submit">Kontrol</button></form>`);
         attachGreekKeyboard(form, "ans");
         form.addEventListener("submit", (e) => {
@@ -1224,7 +1340,7 @@ const App = (() => {
           finish(ok, ok ? "Doğru." : `Yanlış. Doğru: ${trainerQ.answer}`);
         });
         wrap.querySelector("#opts").appendChild(form);
-      } else {
+      } else if (trainerQ.options) {
         trainerQ.options.forEach((opt) => {
           const label = opt === "aorist" ? "Aorist (tek olay)" : opt === "imperfect" ? "Imperfect (süre/alışkanlık)" : opt;
           const b = el(`<button type="button" class="btn diag-opt">${escapeHtml(label)}</button>`);
@@ -1239,7 +1355,7 @@ const App = (() => {
 
     wrap.querySelector("#next")?.addEventListener("click", () => {
       trainerFeedback = null;
-      if (trainerMode === "challenge") {
+      if (trainerMode === "challenge" || trainerMode === "exam") {
         challengeIndex++;
         trainerQ = challengeQueue[challengeIndex] || null;
       } else if (trainerMode === "review") {
@@ -1259,6 +1375,9 @@ const App = (() => {
             wrongId: w.id
           };
         }
+      } else if (trainerMode === "scramble") {
+        startTrainer("scramble");
+        return;
       } else {
         trainerQ = nextTrainerQuestion(trainerMode);
       }
@@ -1408,8 +1527,12 @@ const App = (() => {
     const wrongN = (Progress.load().wrongQueue || []).length;
     return `
       <button type="button" class="btn btn-primary challenge-btn" data-train="challenge">Günlük challenge (10 soru)</button>
+      <button type="button" class="btn btn-primary challenge-btn" data-train="exam">Mini sınav (20 soru)</button>
       <button type="button" class="btn btn-ghost sand-btn challenge-btn" data-train="review">Yanlış tekrarı (${wrongN})</button>
       <div class="quick-train multi">
+        <button type="button" class="btn btn-ghost sand-btn" data-train="scramble">Cümle kur (${ts.scramble || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="reflexive">Dönüşlü (${ts.reflexive || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="polite">Nazik (${ts.polite || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="alpha">Alfabe (${ts.alpha || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="verb">Fiil (${ts.verb || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="gender">Madde (${ts.gender || 0})</button>
@@ -1471,7 +1594,11 @@ const App = (() => {
                       ? "Hava"
                       : id === "health"
                         ? "Sağlık"
-                        : id.toUpperCase();
+                        : id === "work"
+                          ? "İş"
+                          : id === "home"
+                            ? "Ev"
+                            : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);
@@ -1822,6 +1949,10 @@ const App = (() => {
       }
       <button class="btn btn-ghost sand-btn" id="rerun-diag">Teşhis sınavını yeniden çalıştır</button>
       <article class="info-panel journal-panel">
+        <h3>Beceri yoğunluğu</h3>
+        <ul class="skill-bars" id="skill-bars"></ul>
+      </article>
+      <article class="info-panel journal-panel">
         <h3>30 gün aktivite</h3>
         <div class="heat-grid" id="heat-grid"></div>
       </article>
@@ -1862,6 +1993,18 @@ const App = (() => {
     const jlist = section.querySelector("#journal-list");
     const badgeGrid = section.querySelector("#badge-grid");
     const heat = section.querySelector("#heat-grid");
+    const skillBars = section.querySelector("#skill-bars");
+    const tsAll = state.trainerStats || {};
+    const topSkills = Object.entries(tsAll)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+    const maxSkill = Math.max(1, ...topSkills.map((x) => x[1]));
+    topSkills.forEach(([k, v]) => {
+      skillBars.appendChild(
+        el(`<li><span>${escapeHtml(k)}</span><div class="progress-line"><span style="width:${Math.round((v / maxSkill) * 100)}%"></span></div><em>${v}</em></li>`)
+      );
+    });
+    if (!topSkills.length) skillBars.appendChild(el(`<li><span>Henüz antrenman yok</span></li>`));
     Progress.monthActivity().forEach((d) => {
       heat.appendChild(el(`<i class="heat h${d.heat}" title="${d.key}${d.mins ? " · " + d.mins + " dk" : ""}"></i>`));
     });
