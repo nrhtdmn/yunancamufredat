@@ -432,7 +432,17 @@ const App = (() => {
     const typeLabel = (CURRICULUM.typeLabels && CURRICULUM.typeLabels[task.type]) || task.type;
 
     const theoryHtml = (lesson?.theory || [task.detail])
-      .map((p) => `<p class="lesson-p">${escapeHtml(p)}</p>`)
+      .map((p) => {
+        if (typeof p === "object" && p && p.title) {
+          return `<h3 class="lesson-h3">${escapeHtml(p.title)}</h3><p class="lesson-p">${escapeHtml(p.text || "")}</p>`;
+        }
+        const raw = String(p);
+        const m = raw.match(/^([^:]{3,48}):\s+([\s\S]+)$/);
+        if (m) {
+          return `<h3 class="lesson-h3">${escapeHtml(m[1])}</h3><p class="lesson-p">${escapeHtml(m[2])}</p>`;
+        }
+        return `<p class="lesson-p">${escapeHtml(raw)}</p>`;
+      })
       .join("");
     const examples = lesson?.examples || [];
     const steps = lesson?.steps || [];
