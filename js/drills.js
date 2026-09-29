@@ -56,6 +56,34 @@ const DRILLS = {
       a: 0,
       why: "δείχνει ότι… akademik kalıp."
     }
+    {
+      id: "cl9",
+      text: "Δεν ___ χρόνο σήμερα.",
+      options: ["έχω", "είμαι", "πάω", "λέω"],
+      a: 0,
+      why: "έχω χρόνο = vaktim var."
+    },
+    {
+      id: "cl10",
+      text: "Η απόφαση ___ το μέλλον της εταιρείας.",
+      options: ["επηρεάζει", "τρώει", "κοιμάται", "τραγουδά"],
+      a: 0,
+      why: "επηρεάζω = etkilemek (akademik/resmi)."
+    },
+    {
+      id: "cl11",
+      text: "___ τα δεδομένα υπόψη, το αποτέλεσμα είναι θετικό.",
+      options: ["Λαμβάνοντας", "Τρώγοντας", "Τρέχοντας", "Κλείνοντας"],
+      a: 0,
+      why: "λαμβάνω υπόψη = dikkate almak."
+    },
+    {
+      id: "cl12",
+      text: "Σε αντίθεση ___ την κοινή πεποίθηση, η πρόοδος είναι αργή.",
+      options: ["με", "σε", "από", "για"],
+      a: 0,
+      why: "σε αντίθεση με = …nın aksine."
+    }
   ],
 
   reading: [
@@ -95,6 +123,32 @@ const DRILLS = {
         "Kaynak güvenilirliğini ve argüman tutarlılığını değerlendirmeyi",
         "Sadece başlık okumayı",
         "Yorum yazmamayı"
+      ],
+      a: 1
+    },
+    {
+      id: "rd4",
+      passage:
+        "Η τεχνολογία μπορεί να επιταχύνει τη μελέτη, ωστόσο χωρίς σαφή στόχο και πρόγραμμα μετατρέπεται σε περισπασμό. Τα εργαλεία υπηρετούν τη μέθοδο· δεν την αντικαθιστούν.",
+      q: "Teknoloji hakkında yazar ne diyor?",
+      options: [
+        "Teknoloji tek başına yeter",
+        "Amaç ve yöntem olmadan dikkat dağıtır",
+        "Kitaplar gereksizdir",
+        "Program gereksizdir"
+      ],
+      a: 1
+    },
+    {
+      id: "rd5",
+      passage:
+        "Για τις εξετάσεις τύπου YDS, η ταχύτητα χωρίς κατανόηση οδηγεί σε λάθη. Ο υποψήφιος οφείλει να εντοπίζει την κεντρική ιδέα πριν εξετάσει τις επιλογές, ώστε να αποφεύγει παγίδες που βασίζονται σε λέξεις-κλειδιά εκτός πλαισίου.",
+      q: "YDS tarzı sınavda önerilen sıra?",
+      options: [
+        "Önce seçenekler, sonra metin",
+        "Önce ana fikir, sonra seçenekler",
+        "Sadece kelime ezberi",
+        "Zamanı hiç kullanmama"
       ],
       a: 1
     }

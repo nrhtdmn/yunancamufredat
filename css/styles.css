@@ -973,6 +973,49 @@ select {
   line-height: 1;
 }
 
+.mins-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.mins-form input {
+  width: 72px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  background: #fff;
+}
+
+.quick-train {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.center-soft {
+  text-align: center;
+  margin: 0 0 10px !important;
+}
+
+.backup-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.file-label {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  text-align: center;
+}
+
+.study-log-box {
+  margin-bottom: 10px;
+}
+
 .tabbar button {
   background: transparent;
   border: 0;

@@ -14,6 +14,10 @@ const App = (() => {
   let speakTimer = null;
   let speakLeft = 0;
   let speakPromptId = null;
+  let trainerMode = null;
+  let trainerQ = null;
+  let trainerScore = { ok: 0, n: 0 };
+  let trainerFeedback = null;
 
   function speakGreek(text) {
     if (!window.speechSynthesis) return;
@@ -70,6 +74,11 @@ const App = (() => {
     if (drillMode) {
       root.innerHTML = "";
       root.appendChild(renderDrill(state));
+      return;
+    }
+    if (trainerMode) {
+      root.innerHTML = "";
+      root.appendChild(renderTrainer(state));
       return;
     }
     if (!state.onboardingDone) {
@@ -246,11 +255,12 @@ const App = (() => {
     const deckId = CONTENT.decks[level.id] ? level.id : level.id === "c2plus" ? "yds" : "a1";
     const dueHint = CONTENT.decks[deckId] ? CONTENT.decks[deckId].length : 0;
 
+    const todayMins = (state.studyLog || {})[Progress.todayStr()] || 0;
     const section = el(`<section class="view today-view">
       <div class="hero-today">
         <p class="eyebrow">Bugünün emri</p>
         <h1>Merhaba${name}</h1>
-        <p class="lede">Aktif seviye: <strong>${escapeHtml(level.code)} · ${escapeHtml(level.title)}</strong> — ${escapeHtml(plan.label)}</p>
+        <p class="lede">Aktif seviye: <strong>${escapeHtml(level.code)} · ${escapeHtml(level.title)}</strong> — ${escapeHtml(plan.label)} · bugün ${todayMins} dk</p>
       </div>
       ${
         next
@@ -273,6 +283,20 @@ const App = (() => {
         </div>
         <button class="btn btn-ghost" id="go-cards">Kart aç</button>
       </article>
+      <article class="mini-action study-log-box">
+        <div>
+          <strong>Çalışma süresi ekle</strong>
+          <p>Kaynak dışında çalıştıysan buraya yaz</p>
+        </div>
+        <form id="mins-form" class="mins-form">
+          <input name="mins" type="number" min="5" max="300" step="5" value="25" aria-label="Dakika" />
+          <button type="submit" class="btn btn-ghost">+ dk</button>
+        </form>
+      </article>
+      <div class="quick-train">
+        <button type="button" class="btn btn-ghost sand-btn" data-train="alpha">Alfabe</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="verb">Fiil çekimi</button>
+      </div>
       <div class="section-head">
         <h3>Bugünkü plan</h3>
         <select id="mode-select" aria-label="Günlük tempo">
@@ -312,6 +336,20 @@ const App = (() => {
       cardDeckId = deckId;
       startDeck(deckId);
       render();
+    });
+
+    section.querySelector("#mins-form")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const mins = Number(new FormData(e.target).get("mins")) || 0;
+      Progress.logStudyMinutes(mins);
+      render();
+    });
+
+    section.querySelectorAll("[data-train]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        startTrainer(btn.dataset.train);
+        render();
+      });
     });
 
     return section;
@@ -445,14 +483,96 @@ const App = (() => {
     cardDeckId = deckId;
   }
 
+  function startTrainer(mode) {
+    trainerMode = mode;
+    trainerScore = { ok: 0, n: 0 };
+    trainerFeedback = null;
+    trainerQ = nextTrainerQuestion(mode);
+  }
+
+  function nextTrainerQuestion(mode) {
+    if (mode === "alpha") {
+      const item = TRAINERS.alphabet[Math.floor(Math.random() * TRAINERS.alphabet.length)];
+      const wrong = shuffle(TRAINERS.alphabet.filter((x) => x.name !== item.name)).slice(0, 3).map((x) => x.name);
+      const options = shuffle([item.name, ...wrong]);
+      return { kind: "alpha", prompt: item.ch, sub: "Harfin adı?", answer: item.name, options, speak: item.ch.split(" ")[0] };
+    }
+    const verb = TRAINERS.verbs[Math.floor(Math.random() * TRAINERS.verbs.length)];
+    const form = verb.forms[Math.floor(Math.random() * verb.forms.length)];
+    const pool = TRAINERS.verbs.flatMap((v) => v.forms.map((f) => f.f));
+    const wrong = shuffle(pool.filter((f) => f !== form.f)).slice(0, 3);
+    const options = shuffle([form.f, ...wrong]);
+    return {
+      kind: "verb",
+      prompt: `${verb.infinitive} (${verb.gloss})`,
+      sub: `${form.p} → ?`,
+      answer: form.f,
+      options,
+      speak: form.f
+    };
+  }
+
+  function renderTrainer() {
+    if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode);
+    const title = trainerMode === "alpha" ? "Alfabe" : "Fiil çekimi";
+    const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
+      <p class="eyebrow">${escapeHtml(title)} · ${trainerScore.ok}/${trainerScore.n}</p>
+      <h1 class="diag-q greek-line">${escapeHtml(trainerQ.prompt)}</h1>
+      <p class="lede center-soft">${escapeHtml(trainerQ.sub)}</p>
+      <button type="button" class="btn btn-ghost" id="say-q">♪ Dinle</button>
+      <div class="diag-opts" id="opts"></div>
+      ${trainerFeedback ? `<p class="feedback ${trainerFeedback.ok ? "ok" : "bad"}">${escapeHtml(trainerFeedback.msg)}</p><button class="btn btn-primary" id="next">Sonraki</button>` : ""}
+      <button class="btn btn-ghost" id="train-exit" style="width:100%;margin-top:10px">Çık</button>
+    </div></div>`);
+
+    wrap.querySelector("#say-q").addEventListener("click", () => speakGreek(trainerQ.speak || trainerQ.prompt));
+
+    if (!trainerFeedback) {
+      trainerQ.options.forEach((opt) => {
+        const b = el(`<button type="button" class="btn diag-opt">${escapeHtml(opt)}</button>`);
+        b.addEventListener("click", () => {
+          const ok = opt === trainerQ.answer;
+          trainerScore.n++;
+          if (ok) trainerScore.ok++;
+          Progress.bumpTrainer(trainerMode === "alpha" ? "alpha" : "verb");
+          trainerFeedback = {
+            ok,
+            msg: ok ? "Doğru." : `Yanlış. Doğru: ${trainerQ.answer}`
+          };
+          render();
+        });
+        wrap.querySelector("#opts").appendChild(b);
+      });
+    }
+
+    wrap.querySelector("#next")?.addEventListener("click", () => {
+      trainerFeedback = null;
+      trainerQ = nextTrainerQuestion(trainerMode);
+      render();
+    });
+    wrap.querySelector("#train-exit").addEventListener("click", () => {
+      trainerMode = null;
+      trainerQ = null;
+      trainerFeedback = null;
+      view = "today";
+      render();
+    });
+    return wrap;
+  }
+
   function renderCards(state) {
     const deckIds = Object.keys(CONTENT.decks);
+    const ts = state.trainerStats || {};
     if (!cardDeckId) {
       const section = el(`<section class="view cards-view">
         <div class="view-intro">
           <p class="eyebrow">Kelime</p>
           <h1>Kartlar</h1>
           <p class="lede">Leitner kutuları: bilmediğin kartlar sık döner. Önce Yunanca gör, çevir, işaretle.</p>
+        </div>
+        <div class="quick-train">
+          <button type="button" class="btn btn-ghost sand-btn" data-train="alpha">Alfabe (${ts.alpha || 0})</button>
+          <button type="button" class="btn btn-ghost sand-btn" data-train="verb">Fiil çekimi (${ts.verb || 0})</button>
         </div>
         <ul class="deck-grid" id="deck-grid"></ul>
         <p class="meta sand-meta">Toplam kart tekrarı: ${state.cardsReviewed || 0}</p>
@@ -467,6 +587,12 @@ const App = (() => {
           render();
         });
         grid.appendChild(btn);
+      });
+      section.querySelectorAll("[data-train]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          startTrainer(btn.dataset.train);
+          render();
+        });
       });
       return section;
     }
@@ -805,6 +931,14 @@ const App = (() => {
       }
       <button class="btn btn-ghost sand-btn" id="rerun-diag">Teşhis sınavını yeniden çalıştır</button>
       <article class="info-panel journal-panel">
+        <h3>Yedekle / Geri yükle</h3>
+        <p class="hint-inline">İlerlemeyi JSON olarak indir veya başka cihazdan yükle.</p>
+        <div class="backup-row">
+          <button type="button" class="btn btn-primary" id="export-btn">Dışa aktar</button>
+          <label class="btn btn-ghost file-label">İçe aktar<input type="file" id="import-file" accept="application/json,.json" hidden /></label>
+        </div>
+      </article>
+      <article class="info-panel journal-panel">
         <h3>Hata günlüğü</h3>
         <p class="hint-inline">Yanlış soru, karışan yapı, unutulan kelime — buraya yaz.</p>
         <form id="journal-form" class="journal-form">
@@ -859,6 +993,28 @@ const App = (() => {
       diagAnswers = [];
       diagActive = true;
       render();
+    });
+
+    section.querySelector("#export-btn")?.addEventListener("click", () => {
+      const blob = new Blob([Progress.exportData()], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `odigos-backup-${Progress.todayStr()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    section.querySelector("#import-file")?.addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        Progress.importData(text);
+        alert("İlerleme yüklendi.");
+        render();
+      } catch {
+        alert("Dosya okunamadı.");
+      }
     });
 
     section.querySelector("#reset-btn").addEventListener("click", () => {

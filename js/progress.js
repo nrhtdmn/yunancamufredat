@@ -18,7 +18,9 @@ const Progress = (() => {
     lastDiagnostic: null,
     journal: [],
     drillStats: { clozeCorrect: 0, clozeTotal: 0, readingCorrect: 0, readingTotal: 0 },
-    speakDone: {}
+    speakDone: {},
+    studyLog: {},
+    trainerStats: { alpha: 0, verb: 0 }
   });
 
   function load() {
@@ -182,6 +184,39 @@ const Progress = (() => {
     return state;
   }
 
+  function logStudyMinutes(mins) {
+    const state = load();
+    const d = todayStr();
+    state.studyLog = state.studyLog || {};
+    state.studyLog[d] = (state.studyLog[d] || 0) + Math.max(0, Number(mins) || 0);
+    state.totalMinutes = (state.totalMinutes || 0) + Math.max(0, Number(mins) || 0);
+    touchActivity(state);
+    save(state);
+    return state;
+  }
+
+  function bumpTrainer(kind) {
+    const state = load();
+    state.trainerStats = state.trainerStats || { alpha: 0, verb: 0 };
+    if (kind === "alpha") state.trainerStats.alpha++;
+    if (kind === "verb") state.trainerStats.verb++;
+    touchActivity(state);
+    save(state);
+    return state;
+  }
+
+  function exportData() {
+    return JSON.stringify(load(), null, 2);
+  }
+
+  function importData(json) {
+    const parsed = JSON.parse(json);
+    if (!parsed || typeof parsed !== "object") throw new Error("Geçersiz");
+    const merged = { ...defaultState(), ...parsed };
+    save(merged);
+    return merged;
+  }
+
   function levelStats(level) {
     const state = load();
     let total = 0;
@@ -316,6 +351,10 @@ const Progress = (() => {
     addJournal,
     removeJournal,
     recordDrill,
-    markSpeak
+    markSpeak,
+    logStudyMinutes,
+    bumpTrainer,
+    exportData,
+    importData
   };
 })();
