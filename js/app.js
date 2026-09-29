@@ -1576,6 +1576,76 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "futuretime") {
+      const item = EXTRAS9.futureTime[Math.floor(Math.random() * EXTRAS9.futureTime.length)];
+      const wrong = shuffle(EXTRAS9.futureTime.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "futuretime",
+        prompt: item.tr,
+        sub: "Gelecek zaman zarfı?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "habits") {
+      const item = EXTRAS9.habits[Math.floor(Math.random() * EXTRAS9.habits.length)];
+      const wrong = shuffle(EXTRAS9.habits.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "habits",
+        prompt: item.tr,
+        sub: "Alışkanlık cümlesi?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "shoptalk") {
+      const item = EXTRAS9.shopTalk[Math.floor(Math.random() * EXTRAS9.shopTalk.length)];
+      const wrong = shuffle(EXTRAS9.shopTalk.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "shoptalk",
+        prompt: item.tr,
+        sub: "Mağaza kalıbı?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "emotionsent") {
+      const item = EXTRAS9.emotionSent[Math.floor(Math.random() * EXTRAS9.emotionSent.length)];
+      const wrong = shuffle(EXTRAS9.emotionSent.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "emotionsent",
+        prompt: item.tr,
+        sub: "Duygu cümlesi?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split("/")[0].trim(),
+        input: false
+      };
+    }
+    if (mode === "prepplus") {
+      const item = EXTRAS9.prepositionPlus[Math.floor(Math.random() * EXTRAS9.prepositionPlus.length)];
+      const wrong = shuffle(EXTRAS9.prepositionPlus.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "prepplus",
+        prompt: item.tr,
+        sub: "Yer edatı / konum?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.replace("…", ""),
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -1662,6 +1732,11 @@ const App = (() => {
     familytalk: "Aile sohbeti",
     healthtalk: "Sağlık",
     pasttime: "Geçmiş zarf",
+    futuretime: "Gelecek zarf",
+    habits: "Alışkanlık",
+    shoptalk: "Mağaza",
+    emotionsent: "Duygu cümle",
+    prepplus: "Yer edatı",
     scramble: "Cümle kur",
     exam: "Mini sınav",
     flash5: "Hızlı 5",
@@ -2161,7 +2236,7 @@ const App = (() => {
           ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("ordinal", "Sıra")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("question", "Soru")}${btn("match", "Eşleştir")}
           ${btn("verb", "Fiil")}${btn("aspect", "Aspect")}${btn("aorist", "Aorist")}${btn("perfect", "Perfect")}${btn("imperative", "Emir")}${btn("posimp", "Έλα")}${btn("negimp", "Μην")}${btn("subjunctive", "να")}${btn("particle", "θα/να")}${btn("reflexive", "Dönüşlü")}
           ${btn("pronoun", "Zamir")}${btn("dblpron", "Çift zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("case", "Durum")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("superlative", "En…")}${btn("opposite", "Zıt")}${btn("synonym", "Eşanlam")}${btn("connector", "Bağlaç")}${btn("relative", "που")}${btn("plural", "Çoğul")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
-          ${btn("direction", "Yön")}${btn("timeadv", "Zaman")}${btn("pasttime", "Geçmiş")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("weather", "Hava")}${btn("measure", "Ölçü")}${btn("howmuch", "Πόσο")}${btn("transport", "Ulaşım")}${btn("jobs", "Meslek")}${btn("phone", "Telefon")}${btn("office", "Ofis")}${btn("familytalk", "Aile")}${btn("healthtalk", "Sağlık")}${btn("restaurant", "Restoran")}${btn("writeframe", "Yazı kalıbı")}${btn("falsefriend", "False friend")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
+          ${btn("direction", "Yön")}${btn("timeadv", "Zaman")}${btn("pasttime", "Geçmiş")}${btn("futuretime", "Gelecek")}${btn("frequency", "Sıklık")}${btn("habits", "Alışkanlık")}${btn("emotion", "Duygu")}${btn("emotionsent", "Duygu cümle")}${btn("body", "Vücut")}${btn("weather", "Hava")}${btn("measure", "Ölçü")}${btn("howmuch", "Πόσο")}${btn("prepplus", "Yer edatı")}${btn("transport", "Ulaşım")}${btn("jobs", "Meslek")}${btn("phone", "Telefon")}${btn("office", "Ofis")}${btn("familytalk", "Aile")}${btn("healthtalk", "Sağlık")}${btn("shoptalk", "Mağaza")}${btn("restaurant", "Restoran")}${btn("writeframe", "Yazı kalıbı")}${btn("falsefriend", "False friend")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
           <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
           <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
         </div>
@@ -2240,7 +2315,13 @@ const App = (() => {
                                                               ? "Banka"
                                                               : id === "internet"
                                                                 ? "İnternet"
-                                                                : id.toUpperCase();
+                                                                : id === "bathroom"
+                                                                  ? "Banyo"
+                                                                  : id === "street"
+                                                                    ? "Sokak"
+                                                                    : id === "celebration"
+                                                                      ? "Kutlama"
+                                                                      : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);
