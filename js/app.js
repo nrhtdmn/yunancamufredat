@@ -343,7 +343,7 @@ const App = (() => {
       <div class="today-actions">
         <button type="button" class="btn btn-primary" id="go-cards">Kartlar</button>
         <button type="button" class="btn btn-ghost" data-train="flash5">Hızlı 5</button>
-        <button type="button" class="btn btn-ghost" data-train="challenge">Challenge</button>
+        <button type="button" class="btn btn-ghost" data-train="pattern">Kalıp</button>
       </div>
 
       <details class="plan-fold">
@@ -751,7 +751,7 @@ const App = (() => {
       return;
     }
     if (mode === "flash5") {
-      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle", "opposite", "ordinal", "direction", "question", "connector", "emotion", "plural", "relative", "restaurant", "negimp", "timeadv", "transport", "jobs", "weather", "measure", "office"];
+      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle", "opposite", "ordinal", "direction", "question", "connector", "emotion", "plural", "relative", "restaurant", "negimp", "timeadv", "transport", "jobs", "weather", "measure", "office", "pattern"];
       challengeQueue = shuffle(modes).slice(0, 5).map((m) => nextTrainerQuestion(m));
       challengeIndex = 0;
       trainerMode = "flash5";
@@ -1646,6 +1646,49 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "pattern") {
+      const bank = typeof PATTERNS !== "undefined" ? PATTERNS.bank : [];
+      const item = bank[Math.floor(Math.random() * bank.length)];
+      const askFrame = Math.random() < 0.5;
+      if (askFrame) {
+        const wrong = shuffle(bank.filter((x) => x.frame !== item.frame)).slice(0, 3).map((x) => x.frame);
+        return {
+          kind: "pattern",
+          prompt: item.tr,
+          sub: `Kalıp iskeleti? [${item.cat} · ${item.level}]`,
+          answer: item.frame,
+          options: shuffle([item.frame, ...wrong]),
+          hint: item.eg,
+          speak: item.eg,
+          input: false
+        };
+      }
+      const wrong = shuffle(bank.filter((x) => x.eg !== item.eg)).slice(0, 3).map((x) => x.eg);
+      return {
+        kind: "pattern",
+        prompt: item.frame,
+        sub: `Örnek cümle? (${item.tr})`,
+        answer: item.eg,
+        options: shuffle([item.eg, ...wrong]),
+        hint: item.cat,
+        speak: item.eg,
+        input: false
+      };
+    }
+    if (mode === "patternfill") {
+      const bank = typeof PATTERNS !== "undefined" ? PATTERNS.bank : [];
+      const item = bank[Math.floor(Math.random() * bank.length)];
+      return {
+        kind: "patternfill",
+        prompt: item.frame,
+        sub: "Bu iskelete uygun örnek cümleyi yaz (yaklaşık kabul)",
+        answer: item.eg,
+        options: null,
+        hint: item.tr + " · örn: " + item.eg,
+        speak: item.eg,
+        input: true
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -1737,6 +1780,8 @@ const App = (() => {
     shoptalk: "Mağaza",
     emotionsent: "Duygu cümle",
     prepplus: "Yer edatı",
+    pattern: "Cümle kalıbı",
+    patternfill: "Kalıp doldur",
     scramble: "Cümle kur",
     exam: "Mini sınav",
     flash5: "Hızlı 5",
@@ -2226,6 +2271,7 @@ const App = (() => {
       <div class="launch-stack launch-slim">
         <button type="button" class="btn btn-primary" data-train="challenge">Challenge</button>
         <button type="button" class="btn btn-primary" data-train="flash5">Hızlı 5</button>
+        <button type="button" class="btn btn-primary" data-train="pattern">Kalıplar</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="speed10">Hızlı 10</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="exam">Sınav</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="review">Yanlışlar (${wrongN})</button>
