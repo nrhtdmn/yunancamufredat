@@ -1,4 +1,4 @@
-const CACHE = "odigos-v18";
+const CACHE = "odigos-v19";
 const ASSETS = [
   "./",
   "./index.html",
@@ -15,7 +15,9 @@ const ASSETS = [
   "./js/progress.js",
   "./js/app.js",
   "./icons/icon-192.svg",
-  "./icons/icon-512.svg"
+  "./icons/icon-512.svg",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {

@@ -2112,6 +2112,10 @@ const App = (() => {
           </form>
           <button type="button" class="btn btn-ghost" id="focus-btn">${focusLeft > 0 ? "Durdur " + focusLeft + "s" : "Odak 25′"}</button>
         </div>
+        <div class="install-home-block" id="install-home-block">
+          <button type="button" class="btn btn-primary" id="install-home-btn" style="width:100%;margin-top:12px">Ana ekrana ekle</button>
+          <p class="meta install-home-hint" id="install-home-hint" hidden></p>
+        </div>
       </article>
       ${
         diag
@@ -2252,6 +2256,8 @@ const App = (() => {
       render();
     });
 
+    wireInstallHomeButton(section);
+
     section.querySelector("#rerun-diag").addEventListener("click", () => {
       diagIndex = 0;
       diagAnswers = [];
@@ -2291,6 +2297,120 @@ const App = (() => {
     return section;
   }
 
+  let deferredInstall = null;
+  const INSTALL_DISMISS_KEY = "odigos-install-dismissed";
+
+  function isStandalone() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+
+  function isIos() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+
+  function installDismissed() {
+    try {
+      return localStorage.getItem(INSTALL_DISMISS_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  function setInstallDismissed() {
+    try {
+      localStorage.setItem(INSTALL_DISMISS_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function syncInstallBar() {
+    const bar = document.getElementById("install-bar");
+    if (!bar) return;
+    if (isStandalone() || installDismissed() || !deferredInstall) {
+      bar.hidden = true;
+      return;
+    }
+    bar.hidden = false;
+  }
+
+  function setupInstallPrompt() {
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstall = e;
+      syncInstallBar();
+    });
+    window.addEventListener("appinstalled", () => {
+      deferredInstall = null;
+      setInstallDismissed();
+      syncInstallBar();
+    });
+    syncInstallBar();
+  }
+
+  function renderInstallBar() {
+    const bar = el(`<div class="install-bar" id="install-bar" hidden>
+      <span>Οδηγός’u ana ekrana ekle</span>
+      <button type="button" class="btn btn-primary" id="install-btn">Ekle</button>
+      <button type="button" class="btn btn-ghost" id="install-x" aria-label="Kapat">×</button>
+    </div>`);
+    bar.querySelector("#install-btn").addEventListener("click", () => promptInstall());
+    bar.querySelector("#install-x").addEventListener("click", () => {
+      setInstallDismissed();
+      bar.hidden = true;
+    });
+    return bar;
+  }
+
+  async function promptInstall() {
+    if (deferredInstall) {
+      deferredInstall.prompt();
+      const choice = await deferredInstall.userChoice;
+      deferredInstall = null;
+      if (choice && choice.outcome === "accepted") setInstallDismissed();
+      else setInstallDismissed();
+      syncInstallBar();
+      return true;
+    }
+    return false;
+  }
+
+  function wireInstallHomeButton(section) {
+    const btn = section.querySelector("#install-home-btn");
+    const hint = section.querySelector("#install-home-hint");
+    const block = section.querySelector("#install-home-block");
+    if (!btn || !block) return;
+
+    if (isStandalone()) {
+      btn.textContent = "Ana ekranda kurulu";
+      btn.disabled = true;
+      if (hint) {
+        hint.hidden = false;
+        hint.textContent = "Uygulama zaten ana ekrandan açılıyor.";
+      }
+      return;
+    }
+
+    btn.addEventListener("click", async () => {
+      const ok = await promptInstall();
+      if (ok) {
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent = "Kurulum penceresi açıldı.";
+        }
+        return;
+      }
+      if (hint) {
+        hint.hidden = false;
+        if (isIos()) {
+          hint.textContent = "Safari’de Paylaş → Ana Ekrana Ekle.";
+        } else {
+          hint.textContent = "Tarayıcı menüsünden «Uygulamayı yükle» / «Ana ekrana ekle» seç.";
+        }
+      }
+    });
+  }
+
   function init() {
     if (window.speechSynthesis) {
       window.speechSynthesis.getVoices();
@@ -2305,35 +2425,6 @@ const App = (() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(() => {});
     }
-  }
-
-  let deferredInstall = null;
-  function setupInstallPrompt() {
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredInstall = e;
-      const bar = document.getElementById("install-bar");
-      if (bar) bar.hidden = false;
-    });
-  }
-
-  function renderInstallBar() {
-    const bar = el(`<div class="install-bar" id="install-bar" hidden>
-      <span>Οδηγός’u ana ekrana ekle</span>
-      <button type="button" class="btn btn-primary" id="install-btn">Kur</button>
-      <button type="button" class="btn btn-ghost" id="install-x" aria-label="Kapat">×</button>
-    </div>`);
-    bar.querySelector("#install-btn").addEventListener("click", async () => {
-      if (!deferredInstall) return;
-      deferredInstall.prompt();
-      await deferredInstall.userChoice;
-      deferredInstall = null;
-      bar.hidden = true;
-    });
-    bar.querySelector("#install-x").addEventListener("click", () => {
-      bar.hidden = true;
-    });
-    return bar;
   }
 
   return { init };
