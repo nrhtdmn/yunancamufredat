@@ -35,6 +35,30 @@ const EXTRAS2 = {
     { tr: "Kolay gelsin", el: "Να'στε καλά", tip: "bağlama göre" }
   ],
 
+  adjectives: [
+    { tr: "güzel ev (nötr)", el: "ωραίο σπίτι", tip: "sıfat cinsiyet uyumu" },
+    { tr: "güzel kadın", el: "ωραία γυναίκα", tip: "" },
+    { tr: "güzel adam", el: "ωραίος άντρας", tip: "" },
+    { tr: "büyük şehir (dişil)", el: "μεγάλη πόλη", tip: "" },
+    { tr: "küçük çocuk (nötr)", el: "μικρό παιδί", tip: "" },
+    { tr: "iyi fikir", el: "καλή ιδέα", tip: "" },
+    { tr: "zor sınav", el: "δύσκολη εξέταση", tip: "" },
+    { tr: "yeni araba", el: "καινούργιο αυτοκίνητο", tip: "" }
+  ],
+
+  bigNumbers: [
+    { n: 100, el: "εκατό" },
+    { n: 200, el: "διακόσια" },
+    { n: 300, el: "τριακόσια" },
+    { n: 400, el: "τετρακόσια" },
+    { n: 500, el: "πεντακόσια" },
+    { n: 1000, el: "χίλια" },
+    { n: 2000, el: "δύο χιλιάδες" },
+    { n: 2024, el: "δύο χιλιάδες είκοσι τέσσερα" },
+    { n: 150, el: "εκατόν πενήντα" },
+    { n: 999, el: "εννιακόσια ενενήντα εννέα" }
+  ],
+
   vocab: {
     work: [
       { el: "γραφείο", tr: "ofis", tip: "" },

@@ -1417,6 +1417,43 @@ select {
   text-align: right;
 }
 
+.launch-stack {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.train-cat {
+  background: rgba(255, 253, 249, 0.88);
+  border-radius: 14px;
+  margin-bottom: 8px;
+  padding: 4px 10px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.train-cat summary {
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  padding: 10px 4px;
+  color: var(--bg1);
+  list-style: none;
+}
+
+.train-cat summary::-webkit-details-marker {
+  display: none;
+}
+
+.train-cat summary::after {
+  content: "+";
+  float: right;
+  opacity: 0.5;
+}
+
+.train-cat[open] summary::after {
+  content: "–";
+}
+
 .tabbar button {
   background: transparent;
   border: 0;

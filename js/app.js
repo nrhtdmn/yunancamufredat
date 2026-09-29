@@ -704,6 +704,15 @@ const App = (() => {
       trainerScore = { ok: 0, n: 0 };
       return;
     }
+    if (mode === "flash5") {
+      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle"];
+      challengeQueue = shuffle(modes).slice(0, 5).map((m) => nextTrainerQuestion(m));
+      challengeIndex = 0;
+      trainerMode = "flash5";
+      trainerQ = challengeQueue[0];
+      trainerScore = { ok: 0, n: 0 };
+      return;
+    }
     if (mode === "scramble") {
       const item = EXTRAS2.scramble[Math.floor(Math.random() * EXTRAS2.scramble.length)];
       trainerQ = {
@@ -1048,6 +1057,33 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "adjective") {
+      const item = EXTRAS2.adjectives[Math.floor(Math.random() * EXTRAS2.adjectives.length)];
+      const wrong = shuffle(EXTRAS2.adjectives.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "adjective",
+        prompt: item.tr,
+        sub: "Sıfat + isim uyumu?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "bignum") {
+      const item = EXTRAS2.bigNumbers[Math.floor(Math.random() * EXTRAS2.bigNumbers.length)];
+      const wrong = shuffle(EXTRAS2.bigNumbers.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "bignum",
+        prompt: String(item.n),
+        sub: "Yunancası?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -1101,8 +1137,11 @@ const App = (() => {
     genitive: "Genitif",
     reflexive: "Dönüşlü fiil",
     polite: "Nazik üslup",
+    adjective: "Sıfat uyumu",
+    bignum: "Büyük sayı",
     scramble: "Cümle kur",
     exam: "Mini sınav",
+    flash5: "Hızlı 5",
     match: "Eşleştir",
     review: "Yanlış tekrarı",
     dialogue: "Diyalog",
@@ -1259,13 +1298,35 @@ const App = (() => {
       return w;
     }
 
-    if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode === "challenge" || trainerMode === "exam" ? "verb" : trainerMode);
+    if (trainerMode === "flash5" && challengeIndex >= challengeQueue.length) {
+      Progress.bumpTrainer("flash5");
+      const w = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card">
+        <p class="brand-mark">Hızlı 5</p>
+        <h1>${trainerScore.ok}/5</h1>
+        <button class="btn btn-primary" id="again">Bir tur daha</button>
+        <button class="btn btn-ghost" id="train-exit">Çık</button>
+      </div></div>`);
+      w.querySelector("#again").onclick = () => {
+        startTrainer("flash5");
+        render();
+      };
+      w.querySelector("#train-exit").onclick = () => {
+        trainerMode = null;
+        view = "today";
+        render();
+      };
+      return w;
+    }
+
+    if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode === "challenge" || trainerMode === "exam" || trainerMode === "flash5" ? "verb" : trainerMode);
     const title =
       trainerMode === "challenge"
         ? `Challenge ${challengeIndex + 1}/10`
         : trainerMode === "exam"
           ? `Sınav ${challengeIndex + 1}/20`
-          : TRAINER_TITLES[trainerMode] || "Antrenman";
+          : trainerMode === "flash5"
+            ? `Hızlı ${challengeIndex + 1}/5`
+            : TRAINER_TITLES[trainerMode] || "Antrenman";
     const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
       <p class="eyebrow">${escapeHtml(title)} · ${trainerScore.ok}/${trainerScore.n}</p>
       <h1 class="diag-q ${trainerQ.kind === "number" || trainerQ.kind === "aspect" || trainerQ.kind === "translate" || trainerQ.kind === "time" || trainerQ.kind === "exam" || trainerQ.kind === "scramble" ? "" : "greek-line"}">${escapeHtml(trainerQ.prompt)}</h1>
@@ -1355,7 +1416,7 @@ const App = (() => {
 
     wrap.querySelector("#next")?.addEventListener("click", () => {
       trainerFeedback = null;
-      if (trainerMode === "challenge" || trainerMode === "exam") {
+      if (trainerMode === "challenge" || trainerMode === "exam" || trainerMode === "flash5") {
         challengeIndex++;
         trainerQ = challengeQueue[challengeIndex] || null;
       } else if (trainerMode === "review") {
@@ -1376,8 +1437,19 @@ const App = (() => {
           };
         }
       } else if (trainerMode === "scramble") {
-        startTrainer("scramble");
-        return;
+        const item = EXTRAS2.scramble[Math.floor(Math.random() * EXTRAS2.scramble.length)];
+        trainerQ = {
+          kind: "scramble",
+          prompt: item.tr,
+          sub: "Kelimeleri doğru sıraya diz (dokunarak ekle)",
+          answer: item.answer,
+          pool: shuffle(item.words.slice()),
+          built: [],
+          options: null,
+          speak: item.answer,
+          input: false,
+          scramble: true
+        };
       } else {
         trainerQ = nextTrainerQuestion(trainerMode);
       }
@@ -1525,41 +1597,41 @@ const App = (() => {
 
   function trainerButtons(ts) {
     const wrongN = (Progress.load().wrongQueue || []).length;
+    const btn = (id, label) =>
+      `<button type="button" class="btn btn-ghost sand-btn" data-train="${id}">${label} (${ts[id] || 0})</button>`;
     return `
-      <button type="button" class="btn btn-primary challenge-btn" data-train="challenge">Günlük challenge (10 soru)</button>
-      <button type="button" class="btn btn-primary challenge-btn" data-train="exam">Mini sınav (20 soru)</button>
-      <button type="button" class="btn btn-ghost sand-btn challenge-btn" data-train="review">Yanlış tekrarı (${wrongN})</button>
-      <div class="quick-train multi">
-        <button type="button" class="btn btn-ghost sand-btn" data-train="scramble">Cümle kur (${ts.scramble || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="reflexive">Dönüşlü (${ts.reflexive || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="polite">Nazik (${ts.polite || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="alpha">Alfabe (${ts.alpha || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="verb">Fiil (${ts.verb || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="gender">Madde (${ts.gender || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="aspect">Aspect (${ts.aspect || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="aorist">Aorist (${ts.aorist || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="perfect">Perfect (${ts.perfect || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="imperative">Emir (${ts.imperative || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="pronoun">Zamir (${ts.pronoun || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="particle">θα/να (${ts.particle || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="passive">Pasif (${ts.passive || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="compare">Karşılaştır (${ts.compare || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="subjunctive">να aspect (${ts.subjunctive || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="collocation">Kalıp (${ts.collocation || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="prep">Edat (${ts.prep || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="conditional">αν (${ts.conditional || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="number">Sayı (${ts.number || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="months">Ay (${ts.months || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="weekdays">Gün (${ts.weekdays || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="genitive">Genitif (${ts.genitive || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="match">Eşleştir (${ts.match || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="time">Saat (${ts.time || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="dictation">Dikte (${ts.dictation || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="listen">Dinle (${ts.listen || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="translate">TR→EL (${ts.translate || 0})</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
-      </div>`;
+      <div class="launch-stack">
+        <button type="button" class="btn btn-primary challenge-btn" data-train="challenge">Günlük challenge (10)</button>
+        <button type="button" class="btn btn-primary challenge-btn" data-train="flash5">Hızlı 5</button>
+        <button type="button" class="btn btn-primary challenge-btn" data-train="exam">Mini sınav (20)</button>
+        <button type="button" class="btn btn-ghost sand-btn challenge-btn" data-train="review">Yanlış tekrarı (${wrongN})</button>
+      </div>
+      <details class="train-cat" open>
+        <summary>Temel</summary>
+        <div class="quick-train multi">
+          ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("match", "Eşleştir")}
+        </div>
+      </details>
+      <details class="train-cat">
+        <summary>Fiil & zaman</summary>
+        <div class="quick-train multi">
+          ${btn("verb", "Fiil")}${btn("aspect", "Aspect")}${btn("aorist", "Aorist")}${btn("perfect", "Perfect")}${btn("imperative", "Emir")}${btn("subjunctive", "να aspect")}${btn("particle", "θα/να")}${btn("reflexive", "Dönüşlü")}
+        </div>
+      </details>
+      <details class="train-cat">
+        <summary>Yapı & üslup</summary>
+        <div class="quick-train multi">
+          ${btn("pronoun", "Zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
+        </div>
+      </details>
+      <details class="train-cat">
+        <summary>Üretim & sınav</summary>
+        <div class="quick-train multi">
+          ${btn("scramble", "Cümle kur")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
+          <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
+          <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
+        </div>
+      </details>`;
   }
 
   function renderCards(state) {
