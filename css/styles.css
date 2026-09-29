@@ -1428,10 +1428,10 @@ select {
 }
 
 .train-cat[open] summary::after {
-  content: "â€“";
+  content: "?";
 }
 
-/* Sade BugÃ¼n */
+/* Sade Bugün */
 .today-slim .hero-today {
   margin-bottom: 12px;
 }
@@ -1628,7 +1628,7 @@ select {
   }
 }
 
-/* Ders sayfasý */
+/* Ders sayfas? */
 .lesson-view .lesson-hero {
   margin-bottom: 16px;
   color: var(--sand);
@@ -1657,10 +1657,11 @@ select {
   color: var(--bg1);
 }
 .lesson-p {
-  margin: 0 0 10px;
+  max-width: 42rem;
+  margin: 0 0 12px;
   color: var(--ink-soft);
-  line-height: 1.5;
-  font-size: 0.95rem;
+  line-height: 1.68;
+  font-size: 0.98rem;
 }
 .lesson-p:last-child { margin-bottom: 0; }
 .lesson-examples {

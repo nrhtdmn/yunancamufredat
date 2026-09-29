@@ -1,0 +1,962 @@
+[
+  {
+    "id": "a0-u1-t1",
+    "title": "Alfabeyi ezberle",
+    "detail": "Α–Ω sıralı yaz. Her harfi yüksek sesle söyle. Büyük/küçük harf çiftlerini eşleştir.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a0-u1-t2",
+    "title": "Sesli harfler & ikililer",
+    "detail": "α ε η ι ο υ ω + αι ει οι ου αυ ευ. Minimal çiftler: είμαι / είπε, καλό / καλή.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a0-u1-t3",
+    "title": "Aksan (τόνος) kuralı",
+    "detail": "Her kelimede vurgu nereye düşer? 3 heceli kelimelerde aksan alıştırması yap.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a0-u1-t4",
+    "title": "Okuma: 20 kelime",
+    "detail": "καλημέρα, ευχαριστώ, παρακαλώ, ναι, όχι, νερό, ψωμί… Yüksek sesle oku, kaydet, dinle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a0-u2-t1",
+    "title": "Selamlaşma seti",
+    "detail": "καλημέρα / καλησπέρα / καληνύχτα / γεια σου / αντίο. Duruma göre hangi kullanılır?",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a0-u2-t2",
+    "title": "Tanışma diyaloğu",
+    "detail": "Με λένε… · Χαίρω πολύ · Από πού είσαι; · Είμαι από την Τουρκία. Ezberle ve rol yap.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a0-u2-t3",
+    "title": "Sayılar 0–100",
+    "detail": "Cardinal sayılar. Yaş, fiyat, saat için kullan. 15 rastgele sayıyı Yunanca söyle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a0-u2-t4",
+    "title": "Kontrol: kendini kaydet",
+    "detail": "1 dakikalık tanıtım: ad, nerelisin, kaç yaşındasın. Dinle, hataları not et.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a0-u3-t1",
+    "title": "50 kelime yüksek ses",
+    "detail": "Kart destesinden 50 kelimeyi aksanla oku, kaydet.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a0-u3-t2",
+    "title": "Minimal çiftler",
+    "detail": "πόλη/πολύ, καλό/καλώ, φίλος/φύλλο — farkı duy.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a0-u3-t3",
+    "title": "El yazısı sayfası",
+    "detail": "Alfabe + 20 kelimeyi el yazısıyla yaz.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a1-u1-t1",
+    "title": "Cinsiyet kalıpları",
+    "detail": "Eril -ος/-ας/-ης, dişil -α/-η, nötr -ο/-ι/-μα. 30 ismi cinsiyet + madde ile listele.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u1-t2",
+    "title": "Çoğul oluşturma",
+    "detail": "ο άνδρας → οι άνδρες, το παιδί → τα παιδιά. 20 ismin çoğulunu yaz.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u1-t3",
+    "title": "Belirsiz madde",
+    "detail": "ένας / μία / ένα kullanımı. Mini diyalog: «Θέλω έναν καφέ.»",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u2-t1",
+    "title": "είμαι çekimi",
+    "detail": "είμαι, είσαι, είναι, είμαστε, είστε, είναι. Olumsuz: δεν είμαι.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u2-t2",
+    "title": "έχω çekimi",
+    "detail": "έχω… + nesne. «Έχω δύο αδέρφια.» 15 cümle yaz.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u2-t3",
+    "title": "Profil metni",
+    "detail": "80–100 kelimelik Yunanca kendini tanıt. Okuyup sesli kaydet.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u3-t1",
+    "title": "A tipi: -ω fiiller",
+    "detail": "γράφω, διαβάζω, μιλάω/μιλώ, τρώω, πίνω, κοιμάμαι. Çekim tablosu çıkar.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u3-t2",
+    "title": "B tipi: -άω / -ώ",
+    "detail": "αγαπάω, ρωτάω, περπατάω. Ayrı çekim; karıştırmadan 10 fiil ezberle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u3-t3",
+    "title": "Günlük rutin anlatımı",
+    "detail": "Sabah–akşam rutinini şimdiki zamanda yaz ve söyle. En az 12 cümle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u3-t4",
+    "title": "Dinleme: yavaş diyalog",
+    "detail": "A1 seviyesinde 3 kısa diyalog dinle. Ana fikri Türkçe yaz.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u4-t1",
+    "title": "Kafe / restoran",
+    "detail": "Θα ήθελα… · Τον λογαριασμό, παρακαλώ · Είναι πικάντικο; Rol yap.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u4-t2",
+    "title": "Alışveriş kelimeleri",
+    "detail": "πόσο κάνει, φθηνό, ακριβό, μέγεθος, χρώμα. 25 kelime kartı.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u4-t3",
+    "title": "Yön sorma",
+    "detail": "Πού είναι…; · Πώς πάω στο…; · δεξιά / αριστερά / ευθεία. Harita üzerinde pratik.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u4-t4",
+    "title": "A1 mini sınav",
+    "detail": "20 soruluk öz-test: madde, είμαι/έχω, şimdiki zaman, kelime. %80+ hedef.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a1-u5-t1",
+    "title": "Kişi zamirleri",
+    "detail": "εγώ εσύ αυτός… cümlede kullan. 12 örnek.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a1-u5-t2",
+    "title": "Soru sözcükleri",
+    "detail": "τι, ποιος, πού, πότε, γιατί, πώς. Mini röportaj yap.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a1-u5-t3",
+    "title": "Sahip zamirleri",
+    "detail": "μου/σου/του… «Το βιβλίο μου.» 15 cümle.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a1-u6-t1",
+    "title": "Haftanın günleri",
+    "detail": "Δευτέρα… Κυριακή ezber + cümle.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a1-u6-t2",
+    "title": "Sıklık zarfları",
+    "detail": "πάντα, συχνά, μερικές φορές, ποτέ. Rutin anlat.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a1-u6-t3",
+    "title": "Saat söyleme",
+    "detail": "Τι ώρα είναι; Antrenman: Saatler.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a1-u7-t1",
+    "title": "Hava durumu konuşması",
+    "detail": "Κάνει ζέστη/κρύο, βρέχει, φυσάει. 10 kalıp.",
+    "file": "js/extras7.js"
+  },
+  {
+    "id": "a1-u7-t2",
+    "title": "Alışveriş ölçüleri",
+    "detail": "κιλό, λίτρο, φέτα, μπουκάλι. Sipariş cümleleri.",
+    "file": "js/extras7.js"
+  },
+  {
+    "id": "a1-u7-t3",
+    "title": "Πόσο… soruları",
+    "detail": "διαρκεί, μακριά, κάνει, άτομα. Mini diyalog.",
+    "file": "js/extras7.js"
+  },
+  {
+    "id": "a1-u8-t1",
+    "title": "Aile tanıtımı",
+    "detail": "Anne/baba/kardeş cümleleri + iyelik.",
+    "file": "js/extras8.js"
+  },
+  {
+    "id": "a1-u8-t2",
+    "title": "Medeni durum soruları",
+    "detail": "Είσαι παντρεμένος; Έχεις παιδιά;",
+    "file": "js/extras8.js"
+  },
+  {
+    "id": "a1-u8-t3",
+    "title": "Aile destesi",
+    "detail": "Aile kartlarını bitir + 10 cümle.",
+    "file": "js/extras8.js"
+  },
+  {
+    "id": "a1-u9-t1",
+    "title": "Rutin cümleleri",
+    "detail": "8 alışkanlık cümlesi yaz/söyle.",
+    "file": "js/extras9.js"
+  },
+  {
+    "id": "a1-u9-t2",
+    "title": "Sıklık + şimdiki zaman",
+    "detail": "ποτέ/σπάνια/συχνά ayrımı.",
+    "file": "js/extras9.js"
+  },
+  {
+    "id": "a1-u9-t3",
+    "title": "Tipik günüm",
+    "detail": "Sabah–akşam 12 cümle.",
+    "file": "js/extras9.js"
+  },
+  {
+    "id": "a2-u1-t1",
+    "title": "Düzenli aorist",
+    "detail": "έγραψα, διάβασα, μίλησα. Augment (έ-) kuralını öğren. 15 fiil çek.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u1-t2",
+    "title": "Düzensiz aoristler",
+    "detail": "πήγα, ήρθα, είδα, είπα, έφαγα, ήπια, πήρα, έδωσα. Kart + cümle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u1-t3",
+    "title": "Dün ne yaptım?",
+    "detail": "Aorist ile 150 kelimelik günlük yaz. Sesli oku.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u10-t1",
+    "title": "Otel kalıpları",
+    "detail": "Rezervasyon, kat, check-out, Wi-Fi.",
+    "file": "js/patterns-x.js"
+  },
+  {
+    "id": "a2-u10-t2",
+    "title": "Randevu al / ertele",
+    "detail": "Κλείνω / ακυρώνω / μεταθέτω.",
+    "file": "js/patterns-x.js"
+  },
+  {
+    "id": "a2-u10-t3",
+    "title": "Şikayet rolü",
+    "detail": "Δεν λειτουργεί… 2 dk kaydet.",
+    "file": "js/patterns-x.js"
+  },
+  {
+    "id": "a2-u11-t1",
+    "title": "Banka kalıpları",
+    "detail": "Hesap, çekme, yatırma, kart bloke.",
+    "file": "js/patterns-xi.js"
+  },
+  {
+    "id": "a2-u11-t2",
+    "title": "Davet kabul / red",
+    "detail": "Θέλεις να… Με χαρά / Δυστυχώς…",
+    "file": "js/patterns-xi.js"
+  },
+  {
+    "id": "a2-u11-t3",
+    "title": "Ev & komşu",
+    "detail": "Μένω… · θόρυβος · χάλασε…",
+    "file": "js/patterns-xi.js"
+  },
+  {
+    "id": "a2-u2-t1",
+    "title": "Παρατατικός çekimi",
+    "detail": "έγραφα, διάβαζα… Aorist ile fark: «Χθες διάβασα» vs «Παλιά διάβαζα».",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u2-t2",
+    "title": "Çocukluğum",
+    "detail": "Παρατατικός ile çocukluk anlatısı (120+ kelime).",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u2-t3",
+    "title": "Karışık geçmiş pratik",
+    "detail": "10 cümlede aorist/imperfect seçimi yap; nedenini yaz.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u3-t1",
+    "title": "Basit gelecek",
+    "detail": "Θα πάω, θα δω, θα μιλήσω. 20 plan cümlesi.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u3-t2",
+    "title": "Hafta sonu planı",
+    "detail": "Yazılı + sözlü: Cumartesi–Pazar programını anlat.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u3-t3",
+    "title": "İstek / rica",
+    "detail": "Θα ήθελα, μπορώ να…, μήπως… Nazik istek kalıpları.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u4-t1",
+    "title": "Temel bağlaçlar",
+    "detail": "15 bağlaç + örnek cümle listesi çıkar.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u4-t2",
+    "title": "A2 okuma",
+    "detail": "Kısa hikâye / blog (A2). 5 soruya yanıt ver.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u4-t3",
+    "title": "E-posta yaz",
+    "detail": "Arkadaşa 120 kelimelik Yunanca e-posta (geçmiş + gelecek).",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u4-t4",
+    "title": "A2 seviye kapısı",
+    "detail": "Öz-değerlendirme: geçmiş/gelecek + 200 kelimelik metin. Eksikleri not et.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "a2-u5-t1",
+    "title": "Doğrudan nesne",
+    "detail": "Τον βλέπω · Την ξέρω · Το θέλω. Tablo + 20 cümle.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a2-u5-t2",
+    "title": "Çift zamir giriş",
+    "detail": "Μου το δίνει. Basit örnekler ezberle.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a2-u5-t3",
+    "title": "Diyalog: sipariş",
+    "detail": "Garson diyaloğunda zamir kullan.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "a2-u6-t1",
+    "title": "Ofis kalıpları",
+    "detail": "Toplantı, son tarih, dosya, ara. 10 cümle.",
+    "file": "js/extras7.js"
+  },
+  {
+    "id": "a2-u6-t2",
+    "title": "İş e-postası",
+    "detail": "120 kelimelik kısa resmi mail (rica + tarih).",
+    "file": "js/extras7.js"
+  },
+  {
+    "id": "a2-u6-t3",
+    "title": "Toplantı rolü",
+    "detail": "Ας… / συμφωνώ / αναβάλουμε — 2 dk kaydet.",
+    "file": "js/extras7.js"
+  },
+  {
+    "id": "a2-u7-t1",
+    "title": "Şikayet kalıpları",
+    "detail": "Με πονάει… Έχω πυρετό.",
+    "file": "js/extras8.js"
+  },
+  {
+    "id": "a2-u7-t2",
+    "title": "Doktor diyaloğu",
+    "detail": "Semptom + tavsiye rolü, kaydet.",
+    "file": "js/extras8.js"
+  },
+  {
+    "id": "a2-u7-t3",
+    "title": "Geçmiş hastalık anlatısı",
+    "detail": "πέρσι / χθες ile kısa paragraf.",
+    "file": "js/extras8.js"
+  },
+  {
+    "id": "a2-u8-t1",
+    "title": "Deneme & beden",
+    "detail": "Μπορώ να το δοκιμάσω; μέγεθος/χρώμα.",
+    "file": "js/extras9.js"
+  },
+  {
+    "id": "a2-u8-t2",
+    "title": "Ödeme kalıpları",
+    "detail": "κάρτα, απόδειξη, έκπτωση.",
+    "file": "js/extras9.js"
+  },
+  {
+    "id": "a2-u8-t3",
+    "title": "Rol: müşteri–satıcı",
+    "detail": "2 dk kaydet.",
+    "file": "js/extras9.js"
+  },
+  {
+    "id": "a2-u9-t1",
+    "title": "Temel kalıp bankası",
+    "detail": "İstek, zorunluluk, zaman kalıplarını ezberle.",
+    "file": "js/patterns.js"
+  },
+  {
+    "id": "a2-u9-t2",
+    "title": "Kalıbı doldur",
+    "detail": "Her kalıba 3 kendi cümlen.",
+    "file": "js/patterns.js"
+  },
+  {
+    "id": "a2-u9-t3",
+    "title": "Kalıp konuşması",
+    "detail": "2 dk: sadece kalıp iskeletiyle konuş.",
+    "file": "js/patterns.js"
+  },
+  {
+    "id": "b1-u1-t1",
+    "title": "να yapısı",
+    "detail": "Θέλω να μάθω · Πρέπει να διαβάσω · Για να καταλάβω. 25 cümle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u1-t2",
+    "title": "Aorist vs present subjunctive",
+    "detail": "να γράψω / να γράφω farkı. Aspect bilinci.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u1-t3",
+    "title": "Tavsiye diyaloğu",
+    "detail": "Arkadaşa Yunanca 5 tavsiye ver (πρέπει να / καλό είναι να…).",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u2-t1",
+    "title": "Pasif şimdiki zaman",
+    "detail": "γράφεται, λέγεται, γίνεται. Haber dili örnekleri.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u2-t2",
+    "title": "Orta çatı fiiller",
+    "detail": "σκέφτομαι, θυμάμαι, ντρέπομαι, φοβάμαι. 15 fiil + cümle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u2-t3",
+    "title": "Haber özeti",
+    "detail": "Kısa Yunanca haber oku; 80 kelimelik özet yaz.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u3-t1",
+    "title": "Tip 1 koşul",
+    "detail": "Αν έχει χρόνο, θα έρθει. 15 örnek.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u3-t2",
+    "title": "Tip 2 (hayali)",
+    "detail": "Αν είχα χρήματα, θα ταξίδευα. Karşıolgusal pratik.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u3-t3",
+    "title": "Tartışma: «Αν…»",
+    "detail": "3 konu seç; her biri için 1 dk konuş (koşul kullanarak).",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u4-t1",
+    "title": "Tematik listeler",
+    "detail": "İş, sağlık, eğitim, çevre, teknoloji — her temada 40 kelime.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u4-t2",
+    "title": "Eş anlamlı / zıt",
+    "detail": "30 kelime çifti (μεγάλος–μικρός, αρχίζω–τελειώνω…).",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u4-t3",
+    "title": "Podcast / yavaş haber",
+    "detail": "15 dk dinle; 8 anahtar kelime + ana fikir notu.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u4-t4",
+    "title": "B1 kapı sınavı",
+    "detail": "Okuma + dilbilgisi + 200 kelimelik görüş yazısı. Zayıf alanı işaretle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b1-u5-t1",
+    "title": "που kullanımı",
+    "detail": "Ο άνθρωπος που… 15 cümle yaz.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "b1-u5-t2",
+    "title": "Tanımlayıcı vs ek bilgi",
+    "detail": "Virgül farkını örneklerle göster.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "b1-u5-t3",
+    "title": "Kişi tanıt",
+    "detail": "3 kişiyi που ile uzun cümlede anlat.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "b1-u6-t1",
+    "title": "Üstünlük biçimleri",
+    "detail": "ο πιο… / -τερος. 12 cümle.",
+    "file": "js/extras8.js"
+  },
+  {
+    "id": "b1-u6-t2",
+    "title": "Olumlu emirler",
+    "detail": "Έλα, Δώσε, Διάβασε… tablo + pratik.",
+    "file": "js/extras8.js"
+  },
+  {
+    "id": "b1-u6-t3",
+    "title": "Karşılaştırma konuşması",
+    "detail": "Şehir/yemek/dil: en… daha… 2 dk.",
+    "file": "js/extras8.js"
+  },
+  {
+    "id": "b1-u7-t1",
+    "title": "Gelecek zaman zarfları",
+    "detail": "αύριο… του χρόνου. 10 plan.",
+    "file": "js/extras9.js"
+  },
+  {
+    "id": "b1-u7-t2",
+    "title": "Duygu cümleleri",
+    "detail": "Είμαι / Νιώθω / aorist duygular.",
+    "file": "js/extras9.js"
+  },
+  {
+    "id": "b1-u7-t3",
+    "title": "Yer edatları turu",
+    "detail": "πάνω/κάτω/μπροστά… 12 cümle.",
+    "file": "js/extras9.js"
+  },
+  {
+    "id": "b1-u8-t1",
+    "title": "Bağlaçlı kalıplar",
+    "detail": "παρόλο που, γι' αυτό, για να…",
+    "file": "js/patterns.js"
+  },
+  {
+    "id": "b1-u8-t2",
+    "title": "που & αν kalıpları",
+    "detail": "15 dönüşüm cümlesi.",
+    "file": "js/patterns.js"
+  },
+  {
+    "id": "b1-u8-t3",
+    "title": "Kalıp yazısı",
+    "detail": "150 kelime, en az 8 kalıp.",
+    "file": "js/patterns.js"
+  },
+  {
+    "id": "b1-u9-t1",
+    "title": "Teknoloji sorunları",
+    "detail": "Uygulama, şifre, link, restart.",
+    "file": "js/patterns-xi.js"
+  },
+  {
+    "id": "b1-u9-t2",
+    "title": "Zaman yönetimi kalıpları",
+    "detail": "προλαβαίνω · προτεραιότητες · αναβάλλω.",
+    "file": "js/patterns-xi.js"
+  },
+  {
+    "id": "b1-u9-t3",
+    "title": "Karşılaştırma + onay",
+    "detail": "πιο… · όσο…τόσο · συμφωνώ/διαφωνώ.",
+    "file": "js/patterns-xi.js"
+  },
+  {
+    "id": "b2-u1-t1",
+    "title": "Perfect zamanlar",
+    "detail": "έχω γράψει (parakeimenos). Kullanım alanları + 20 cümle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u1-t2",
+    "title": "Dolaylı anlatım",
+    "detail": "Είπε ότι… · Ρώτησε αν… · Μου είπε να… Dönüşüm alıştırması.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u1-t3",
+    "title": "İleri bağlaçlar",
+    "detail": "παρόλο που, ενώ, ώστε, εφόσον, ωστόσο. Akademik bağlayıcı seti.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u2-t1",
+    "title": "Haftalık haber rutini",
+    "detail": "3 Yunanca haber oku. Her biri için: özet + 5 yeni kelime.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u2-t2",
+    "title": "Video: normal hız",
+    "detail": "8–12 dk YouTube/ERT. Altyazısız ilk geçiş, sonra not.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u2-t3",
+    "title": "Görüş yazısı",
+    "detail": "250–300 kelime: güncel bir konuda tutumunu yaz (giriş–gelişme–sonuç).",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u3-t1",
+    "title": "Paragraf anatomisi",
+    "detail": "Konu cümlesi, destek, sonuç. 5 paragrafta işaretle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u3-t2",
+    "title": "Bağlamdan kelime",
+    "detail": "Bilinmeyen 10 kelimeyi sözlüksüz tahmin et; sonra doğrula.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u3-t3",
+    "title": "YDS tarzı 10 soru",
+    "detail": "Uzun paragraf + çoktan seçmeli. Süre tut (öneri: 12 dk).",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u3-t4",
+    "title": "Hata günlüğü",
+    "detail": "Yanlış soruları sınıflandır: kelime / yapı / çıkarım / dikkat.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u4-t1",
+    "title": "Hazırlıksız konuşma",
+    "detail": "10 konu kartı. Her birinde 2 dk konuş, kaydet.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u4-t2",
+    "title": "Karşı argüman",
+    "detail": "Bir tezi savun, sonra karşı tarafı da Yunanca anlat.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u4-t3",
+    "title": "B2 kapı sınavı",
+    "detail": "Okuma + yazma + 4 dk konuşma. CEFR B2 checklist ile işaretle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "b2-u5-t1",
+    "title": "Kalıp bankası",
+    "detail": "Κατά τη γνώμη μου… · Για παράδειγμα… · Συμπερασματικά…",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "b2-u5-t2",
+    "title": "300 kelimelik görüş",
+    "detail": "Teknoloji veya eğitim konusunda yapılandırılmış yazı.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "b2-u5-t3",
+    "title": "Sözlü savunma",
+    "detail": "Aynı tezi 3 dk konuş, kaydet.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "b2-u6-t1",
+    "title": "Kalıp iskeleti ezberi",
+    "detail": "8 yazma çerçevesini cümleyle ezberle.",
+    "file": "js/extras7.js"
+  },
+  {
+    "id": "b2-u6-t2",
+    "title": "250 kelimelik deneme",
+    "detail": "İskeleti kullanarak bir konuda yaz.",
+    "file": "js/extras7.js"
+  },
+  {
+    "id": "b2-u6-t3",
+    "title": "Kendi yazını düzenle",
+    "detail": "Bağlaç çeşitliliği ve tekrar kırpma.",
+    "file": "js/extras7.js"
+  },
+  {
+    "id": "b2-u7-t1",
+    "title": "Görüş & akademik kalıp",
+    "detail": "Κατά τη γνώμη μου… Σύμφωνα με…",
+    "file": "js/patterns.js"
+  },
+  {
+    "id": "b2-u7-t2",
+    "title": "Resmi mail kalıpları",
+    "detail": "Bilgilendirme + onay + kapanış.",
+    "file": "js/patterns.js"
+  },
+  {
+    "id": "b2-u7-t3",
+    "title": "YDS kalıp avı",
+    "detail": "Cloze/okumada kalıp işaretle.",
+    "file": "js/patterns.js"
+  },
+  {
+    "id": "b2-u8-t1",
+    "title": "Haber dili kalıpları",
+    "detail": "Ανακοινώθηκε ότι… Σύμφωνα με…",
+    "file": "js/patterns-x.js"
+  },
+  {
+    "id": "b2-u8-t2",
+    "title": "C2 üslup denemesi",
+    "detail": "5 ileri kalıpla kısa paragraf.",
+    "file": "js/patterns-x.js"
+  },
+  {
+    "id": "b2-u8-t3",
+    "title": "Kalıp + okuma",
+    "detail": "Okuma setinde kalıp avı.",
+    "file": "js/patterns-x.js"
+  },
+  {
+    "id": "c1-u1-t1",
+    "title": "Üslup dönüşümü",
+    "detail": "Aynı mesajı samimi / nötr / resmi yaz. 5 örnek.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u1-t2",
+    "title": "Akademik bağlayıcılar",
+    "detail": "εντούτοις, συνεπώς, ιδιαιτέρως, αναμφίβολα… 40 ifade kartı.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u1-t3",
+    "title": "Makale özeti",
+    "detail": "Uzun bir köşe yazısı / akademik özet oku; 200 kelimelik özet.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u2-t1",
+    "title": "50 deyim",
+    "detail": "Her deyim: anlam + örnek cümle + Türkçe karşılık.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u2-t2",
+    "title": "Doğal yeniden yazım",
+    "detail": "10 düz cümleyi daha doğal/idiomatik hale getir.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u2-t3",
+    "title": "Dizi / podcast notu",
+    "detail": "Native içerik 20 dk. Yeni ifadeleri listele.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u3-t1",
+    "title": "Cloze stratejisi",
+    "detail": "Boşluk doldurma: dilbilgisi ipuçları + kolokasyon. 3 set çöz.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u3-t2",
+    "title": "Akademik kelime bankası",
+    "detail": "YDS sıklık: 200 kelime. Aktif üretim cümleleri yaz.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u3-t3",
+    "title": "Zamanlı deneme parçası",
+    "detail": "20 YDS tarzı soru, süre sınırlı. Analiz zorunlu.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u4-t1",
+    "title": "400 kelimelik deneme",
+    "detail": "Toplumsal bir konuda yapılandırılmış deneme.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u4-t2",
+    "title": "5 dk sunum",
+    "detail": "Slaytsız konuş. Kaydet, dolgu kelimelerini azalt.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u4-t3",
+    "title": "C1 kapı sınavı",
+    "detail": "Zor metin + deneme + dinleme. C1 checklist.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c1-u5-t1",
+    "title": "40 bağlayıcı",
+    "detail": "Karşıtlık, neden-sonuç, ekleme, örnekleme listesi.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "c1-u5-t2",
+    "title": "Paragraf yeniden yaz",
+    "detail": "Zayıf bir paragrafı akademik üsluba çevir.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "c1-u5-t3",
+    "title": "Editör gözü",
+    "detail": "Eski yazından 5 bağlayıcı hatası bul ve düzelt.",
+    "file": "js/extras.js"
+  },
+  {
+    "id": "c1-u6-t1",
+    "title": "YDS kalıp seti",
+    "detail": "Παρά το γεγονός ότι, Δεδομένου ότι, Ως εκ τούτου…",
+    "file": "js/patterns-extra.js"
+  },
+  {
+    "id": "c1-u6-t2",
+    "title": "Tartışma kalıpları",
+    "detail": "Από τη μία… · Συμφωνώ · Διαφωνώ…",
+    "file": "js/patterns-extra.js"
+  },
+  {
+    "id": "c1-u6-t3",
+    "title": "300 kelimelik kalıp denemesi",
+    "detail": "En az 12 ileri kalıp kullan.",
+    "file": "js/patterns-extra.js"
+  },
+  {
+    "id": "c1-u7-t1",
+    "title": "Çevre kalıp seti",
+    "detail": "προστατεύουμε · μέτρα · επιτακτική ανάγκη.",
+    "file": "js/patterns-xi.js"
+  },
+  {
+    "id": "c1-u7-t2",
+    "title": "YDS bağlaç bankası XI",
+    "detail": "Παρά · Ανεξάρτητα · Υπό την προϋπόθεση…",
+    "file": "js/patterns-xi.js"
+  },
+  {
+    "id": "c1-u7-t3",
+    "title": "350 kelimelik çevre denemesi",
+    "detail": "En az 10 YDS+/çevre kalıbı.",
+    "file": "js/patterns-xi.js"
+  },
+  {
+    "id": "c2-u1-t1",
+    "title": "Kısa öykü / roman bölümü",
+    "detail": "Edebi metin oku. Üslup ve imgeleri Türkçe analiz et.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c2-u1-t2",
+    "title": "Kültürel referanslar",
+    "detail": "Yunan tarihi/güncel kültür: 10 kavram kartı (π.χ. φιλότιμο).",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c2-u1-t3",
+    "title": "Mizah & ironi",
+    "detail": "Stand-up / satira / komedi sahnesi. Neden komik olduğunu açıkla.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c2-u2-t1",
+    "title": "Alan sözlüğü",
+    "detail": "Kendi alanından 100 terim + tanımlar Yunanca.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c2-u2-t2",
+    "title": "Uzman anlatım",
+    "detail": "Alanından bir konuyu 8–10 dk Yunanca anlat.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c2-u2-t3",
+    "title": "Teknik özet",
+    "detail": "Makale/raporu Yunanca 300 kelimede özetle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c2-u3-t1",
+    "title": "İnce yapı bankası",
+    "detail": "Nadir ama güçlü yapılar (özel partisip kullanımları vb.).",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c2-u3-t2",
+    "title": "Stil düzenleme",
+    "detail": "Eski yazını C2 üslubuna yeniden yaz: daha yoğun, daha zarif.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c2-u3-t3",
+    "title": "C2 öz-değerlendirme",
+    "detail": "CEFR C2 can-do listesini dürüstçe işaretle.",
+    "file": "js/curriculum.js"
+  },
+  {
+    "id": "c2-u4-t1",
+    "title": "C2 iskelet bankası",
+    "detail": "6 C2 kalıbını ezber + örnek.",
+    "file": "js/patterns-x.js"
+  },
+  {
+    "id": "c2-u4-t2",
+    "title": "Üslup yükseltme",
+    "detail": "Eski B2 yazını C2 kalıplarla yeniden yaz.",
+    "file": "js/patterns-x.js"
+  },
+  {
+    "id": "c2-u4-t3",
+    "title": "Sözlü nüans",
+    "detail": "3 dk: çekince + vurgu kalıpları.",
+    "file": "js/patterns-x.js"
+  }
+]
