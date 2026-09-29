@@ -366,6 +366,13 @@ const App = (() => {
           ${[25, 45, 60, 90].map((g) => `<option value="${g}" ${g === goal ? "selected" : ""}>${g} dk</option>`).join("")}
         </select>
       </article>
+      <article class="mini-action">
+        <div>
+          <strong>Odak sayacı</strong>
+          <p>${focusLeft > 0 ? focusLeft + " sn kaldı" : "25 dk pomodoro"}</p>
+        </div>
+        <button type="button" class="btn btn-ghost" id="focus-btn">${focusLeft > 0 ? "Durdur" : "Başlat"}</button>
+      </article>
       ${trainerButtons(ts)}
       <div class="section-head">
         <h3>Bugünkü plan</h3>
