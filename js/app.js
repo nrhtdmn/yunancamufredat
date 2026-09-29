@@ -563,7 +563,7 @@ const App = (() => {
     challengeQueue = [];
     challengeIndex = 0;
     if (mode === "challenge") {
-      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months", "genitive", "opposite", "ordinal", "direction", "adjective", "question", "connector", "frequency", "emotion", "plural", "relative", "restaurant", "case"];
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months", "genitive", "opposite", "ordinal", "direction", "adjective", "question", "connector", "frequency", "emotion", "plural", "relative", "restaurant", "case", "negimp", "dblpron", "timeadv", "transport", "jobs"];
       challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
       trainerQ = challengeQueue[0];
       return;
@@ -598,7 +598,7 @@ const App = (() => {
       return;
     }
     if (mode === "flash5") {
-      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle", "opposite", "ordinal", "direction", "question", "connector", "emotion", "plural", "relative", "restaurant"];
+      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle", "opposite", "ordinal", "direction", "question", "connector", "emotion", "plural", "relative", "restaurant", "negimp", "timeadv", "transport", "jobs"];
       challengeQueue = shuffle(modes).slice(0, 5).map((m) => nextTrainerQuestion(m));
       challengeIndex = 0;
       trainerMode = "flash5";
@@ -1199,6 +1199,90 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "negimp") {
+      const item = EXTRAS6.negImperative[Math.floor(Math.random() * EXTRAS6.negImperative.length)];
+      const wrong = shuffle(EXTRAS6.negImperative.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "negimp",
+        prompt: item.tr,
+        sub: "Olumsuz emir?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "dblpron") {
+      const item = EXTRAS6.doublePronoun[Math.floor(Math.random() * EXTRAS6.doublePronoun.length)];
+      const wrong = shuffle(EXTRAS6.doublePronoun.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "dblpron",
+        prompt: item.tr,
+        sub: "Çift zamir yapısı?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "timeadv") {
+      const item = EXTRAS6.timeAdverbs[Math.floor(Math.random() * EXTRAS6.timeAdverbs.length)];
+      const wrong = shuffle(EXTRAS6.timeAdverbs.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "timeadv",
+        prompt: item.tr,
+        sub: "Zaman zarfı?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "transport") {
+      const item = EXTRAS6.transport[Math.floor(Math.random() * EXTRAS6.transport.length)];
+      const wrong = shuffle(EXTRAS6.transport.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "transport",
+        prompt: item.tr,
+        sub: "Ulaşım / yol?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "jobs") {
+      const item = EXTRAS6.jobs[Math.floor(Math.random() * EXTRAS6.jobs.length)];
+      const wrong = shuffle(EXTRAS6.jobs.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "jobs",
+        prompt: item.tr,
+        sub: "Meslek?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "phone") {
+      const item = EXTRAS6.phone[Math.floor(Math.random() * EXTRAS6.phone.length)];
+      const wrong = shuffle(EXTRAS6.phone.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "phone",
+        prompt: item.tr,
+        sub: "Telefon ifadesi?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -1269,6 +1353,12 @@ const App = (() => {
     relative: "που göreli",
     restaurant: "Restoran",
     case: "Durum / edat",
+    negimp: "Olumsuz emir",
+    dblpron: "Çift zamir",
+    timeadv: "Zaman zarfı",
+    transport: "Ulaşım",
+    jobs: "Meslek",
+    phone: "Telefon",
     scramble: "Cümle kur",
     exam: "Mini sınav",
     flash5: "Hızlı 5",
@@ -1766,9 +1856,9 @@ const App = (() => {
         <summary>Tüm antrenmanlar</summary>
         <div class="quick-train multi">
           ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("ordinal", "Sıra")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("question", "Soru")}${btn("match", "Eşleştir")}
-          ${btn("verb", "Fiil")}${btn("aspect", "Aspect")}${btn("aorist", "Aorist")}${btn("perfect", "Perfect")}${btn("imperative", "Emir")}${btn("subjunctive", "να")}${btn("particle", "θα/να")}${btn("reflexive", "Dönüşlü")}
-          ${btn("pronoun", "Zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("case", "Durum")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("opposite", "Zıt")}${btn("synonym", "Eşanlam")}${btn("connector", "Bağlaç")}${btn("relative", "που")}${btn("plural", "Çoğul")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
-          ${btn("direction", "Yön")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("restaurant", "Restoran")}${btn("falsefriend", "False friend")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
+          ${btn("verb", "Fiil")}${btn("aspect", "Aspect")}${btn("aorist", "Aorist")}${btn("perfect", "Perfect")}${btn("imperative", "Emir")}${btn("negimp", "Μην")}${btn("subjunctive", "να")}${btn("particle", "θα/να")}${btn("reflexive", "Dönüşlü")}
+          ${btn("pronoun", "Zamir")}${btn("dblpron", "Çift zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("case", "Durum")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("opposite", "Zıt")}${btn("synonym", "Eşanlam")}${btn("connector", "Bağlaç")}${btn("relative", "που")}${btn("plural", "Çoğul")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
+          ${btn("direction", "Yön")}${btn("timeadv", "Zaman")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("transport", "Ulaşım")}${btn("jobs", "Meslek")}${btn("phone", "Telefon")}${btn("restaurant", "Restoran")}${btn("falsefriend", "False friend")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
           <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
           <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
         </div>
@@ -1829,7 +1919,13 @@ const App = (() => {
                                             ? "Spor"
                                             : id === "money"
                                               ? "Para"
-                                              : id.toUpperCase();
+                                              : id === "clothes"
+                                                ? "Giysi"
+                                                : id === "hotel"
+                                                  ? "Otel"
+                                                  : id === "animals"
+                                                    ? "Hayvanlar"
+                                                    : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);
