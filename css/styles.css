@@ -1280,35 +1280,7 @@ select {
 }
 
 .install-bar {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-  width: min(720px, calc(100% - 16px));
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: rgba(7, 24, 32, 0.96);
-  color: var(--sand);
-  border: 1px solid rgba(243, 235, 224, 0.2);
-  border-radius: 14px;
-  z-index: 30;
-  box-shadow: var(--shadow);
-}
-
-.install-bar span {
-  flex: 1;
-  font-size: 0.9rem;
-}
-
-.install-bar .btn {
-  padding: 8px 12px;
-}
-
-.install-bar .btn-ghost {
-  color: var(--sand);
-  border-color: rgba(243, 235, 224, 0.3);
+  display: none !important;
 }
 
 .install-home-hint {

@@ -1,4 +1,4 @@
-const CACHE = "odigos-v19";
+const CACHE = "odigos-v20";
 const ASSETS = [
   "./",
   "./index.html",

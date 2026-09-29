@@ -2298,7 +2298,6 @@ const App = (() => {
   }
 
   let deferredInstall = null;
-  const INSTALL_DISMISS_KEY = "odigos-install-dismissed";
 
   function isStandalone() {
     return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
@@ -2308,78 +2307,28 @@ const App = (() => {
     return /iphone|ipad|ipod/i.test(navigator.userAgent);
   }
 
-  function installDismissed() {
-    try {
-      return localStorage.getItem(INSTALL_DISMISS_KEY) === "1";
-    } catch {
-      return false;
-    }
-  }
-
-  function setInstallDismissed() {
-    try {
-      localStorage.setItem(INSTALL_DISMISS_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-  }
-
-  function syncInstallBar() {
-    const bar = document.getElementById("install-bar");
-    if (!bar) return;
-    if (isStandalone() || installDismissed() || !deferredInstall) {
-      bar.hidden = true;
-      return;
-    }
-    bar.hidden = false;
-  }
-
   function setupInstallPrompt() {
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredInstall = e;
-      syncInstallBar();
     });
     window.addEventListener("appinstalled", () => {
       deferredInstall = null;
-      setInstallDismissed();
-      syncInstallBar();
     });
-    syncInstallBar();
-  }
-
-  function renderInstallBar() {
-    const bar = el(`<div class="install-bar" id="install-bar" hidden>
-      <span>Οδηγός’u ana ekrana ekle</span>
-      <button type="button" class="btn btn-primary" id="install-btn">Ekle</button>
-      <button type="button" class="btn btn-ghost" id="install-x" aria-label="Kapat">×</button>
-    </div>`);
-    bar.querySelector("#install-btn").addEventListener("click", () => promptInstall());
-    bar.querySelector("#install-x").addEventListener("click", () => {
-      setInstallDismissed();
-      bar.hidden = true;
-    });
-    return bar;
   }
 
   async function promptInstall() {
-    if (deferredInstall) {
-      deferredInstall.prompt();
-      const choice = await deferredInstall.userChoice;
-      deferredInstall = null;
-      if (choice && choice.outcome === "accepted") setInstallDismissed();
-      else setInstallDismissed();
-      syncInstallBar();
-      return true;
-    }
-    return false;
+    if (!deferredInstall) return false;
+    deferredInstall.prompt();
+    await deferredInstall.userChoice;
+    deferredInstall = null;
+    return true;
   }
 
   function wireInstallHomeButton(section) {
     const btn = section.querySelector("#install-home-btn");
     const hint = section.querySelector("#install-home-hint");
-    const block = section.querySelector("#install-home-block");
-    if (!btn || !block) return;
+    if (!btn) return;
 
     if (isStandalone()) {
       btn.textContent = "Ana ekranda kurulu";
@@ -2396,16 +2345,17 @@ const App = (() => {
       if (ok) {
         if (hint) {
           hint.hidden = false;
-          hint.textContent = "Kurulum penceresi açıldı.";
+          hint.textContent = "Kurulum tamam / pencere açıldı.";
         }
+        btn.textContent = "Ana ekrana eklendi";
         return;
       }
       if (hint) {
         hint.hidden = false;
         if (isIos()) {
-          hint.textContent = "Safari’de Paylaş → Ana Ekrana Ekle.";
+          hint.textContent = "Safari → Paylaş (□↑) → Ana Ekrana Ekle.";
         } else {
-          hint.textContent = "Tarayıcı menüsünden «Uygulamayı yükle» / «Ana ekrana ekle» seç.";
+          hint.textContent = "Chrome menü (⋮) → Uygulamayı yükle / Ana ekrana ekle.";
         }
       }
     });
@@ -2417,9 +2367,7 @@ const App = (() => {
       window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     }
     Progress.refreshBadges();
-    if (!document.getElementById("install-bar")) {
-      document.body.appendChild(renderInstallBar());
-    }
+    document.getElementById("install-bar")?.remove();
     setupInstallPrompt();
     render();
     if ("serviceWorker" in navigator) {
