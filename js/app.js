@@ -8,6 +8,24 @@ const App = (() => {
   let diagIndex = 0;
   let diagAnswers = [];
   let diagActive = false;
+  let drillMode = null;
+  let drillIndex = 0;
+  let drillFeedback = null;
+  let speakTimer = null;
+  let speakLeft = 0;
+  let speakPromptId = null;
+
+  function speakGreek(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "el-GR";
+    u.rate = 0.9;
+    const voices = window.speechSynthesis.getVoices();
+    const elVoice = voices.find((v) => (v.lang || "").toLowerCase().startsWith("el"));
+    if (elVoice) u.voice = elVoice;
+    window.speechSynthesis.speak(u);
+  }
 
   function $(sel, root = document) {
     return root.querySelector(sel);
@@ -47,6 +65,11 @@ const App = (() => {
     if (diagActive) {
       root.innerHTML = "";
       root.appendChild(renderDiagnostic());
+      return;
+    }
+    if (drillMode) {
+      root.innerHTML = "";
+      root.appendChild(renderDrill(state));
       return;
     }
     if (!state.onboardingDone) {
@@ -480,6 +503,9 @@ const App = (() => {
           ${card.tip ? `<small>${escapeHtml(card.tip)}</small>` : ""}
         </span>
       </button>
+      <div class="speak-row">
+        <button type="button" class="btn btn-ghost" id="say-el">♪ Dinle</button>
+      </div>
       <p class="meta sand-meta center">${cardFlipped ? "Bildin mi?" : "Çevirmek için dokun"}</p>
       <div class="card-actions ${cardFlipped ? "" : "hidden"}">
         <button class="btn btn-ghost" id="card-no">Tekrar</button>
@@ -490,6 +516,10 @@ const App = (() => {
     section.querySelector("#flash").addEventListener("click", () => {
       cardFlipped = !cardFlipped;
       render();
+    });
+    section.querySelector("#say-el")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      speakGreek(card.el);
     });
     section.querySelector("#back-decks").addEventListener("click", () => {
       cardDeckId = null;
@@ -510,7 +540,179 @@ const App = (() => {
     return section;
   }
 
+  function startDrill(mode) {
+    drillMode = mode;
+    drillIndex = 0;
+    drillFeedback = null;
+    if (speakTimer) {
+      clearInterval(speakTimer);
+      speakTimer = null;
+    }
+    speakLeft = 0;
+    speakPromptId = null;
+  }
+
+  function renderDrill(state) {
+    if (drillMode === "cloze") return renderClozeDrill(state);
+    if (drillMode === "reading") return renderReadingDrill(state);
+    if (drillMode === "speak") return renderSpeakDrill(state);
+    drillMode = null;
+    return renderYds();
+  }
+
+  function renderClozeDrill(state) {
+    const items = DRILLS.cloze;
+    if (drillIndex >= items.length) {
+      const ds = state.drillStats || {};
+      const w = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card">
+        <p class="brand-mark">Cloze bitti</p>
+        <h1>${ds.clozeCorrect || 0}/${ds.clozeTotal || 0}</h1>
+        <p class="lede">Skor localStorage’da birikir.</p>
+        <button class="btn btn-primary" id="drill-home">YDS’ye dön</button>
+        <button class="btn btn-ghost" id="drill-retry">Tekrar</button>
+      </div></div>`);
+      w.querySelector("#drill-home").onclick = () => {
+        drillMode = null;
+        view = "yds";
+        render();
+      };
+      w.querySelector("#drill-retry").onclick = () => {
+        startDrill("cloze");
+        render();
+      };
+      return w;
+    }
+    const item = items[drillIndex];
+    const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
+      <p class="eyebrow">Cloze ${drillIndex + 1}/${items.length}</p>
+      <h1 class="diag-q greek-line">${escapeHtml(item.text)}</h1>
+      <div class="diag-opts" id="opts"></div>
+      ${drillFeedback ? `<p class="feedback ${drillFeedback.ok ? "ok" : "bad"}">${escapeHtml(drillFeedback.msg)}</p><button class="btn btn-primary" id="next">Devam</button>` : ""}
+    </div></div>`);
+    const opts = wrap.querySelector("#opts");
+    if (!drillFeedback) {
+      item.options.forEach((opt, i) => {
+        const b = el(`<button type="button" class="btn diag-opt">${escapeHtml(opt)}</button>`);
+        b.addEventListener("click", () => {
+          const ok = i === item.a;
+          Progress.recordDrill("cloze", ok);
+          drillFeedback = { ok, msg: ok ? "Doğru. " + item.why : "Yanlış. " + item.why };
+          render();
+        });
+        opts.appendChild(b);
+      });
+    }
+    wrap.querySelector("#next")?.addEventListener("click", () => {
+      drillFeedback = null;
+      drillIndex++;
+      render();
+    });
+    return wrap;
+  }
+
+  function renderReadingDrill(state) {
+    const items = DRILLS.reading;
+    if (drillIndex >= items.length) {
+      const ds = state.drillStats || {};
+      const w = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card">
+        <p class="brand-mark">Okuma bitti</p>
+        <h1>${ds.readingCorrect || 0}/${ds.readingTotal || 0}</h1>
+        <button class="btn btn-primary" id="drill-home">YDS’ye dön</button>
+        <button class="btn btn-ghost" id="drill-retry">Tekrar</button>
+      </div></div>`);
+      w.querySelector("#drill-home").onclick = () => { drillMode = null; view = "yds"; render(); };
+      w.querySelector("#drill-retry").onclick = () => { startDrill("reading"); render(); };
+      return w;
+    }
+    const item = items[drillIndex];
+    const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card wide-card">
+      <p class="eyebrow">Okuma ${drillIndex + 1}/${items.length}</p>
+      <p class="passage">${escapeHtml(item.passage)}</p>
+      <h2 class="diag-q">${escapeHtml(item.q)}</h2>
+      <div class="diag-opts" id="opts"></div>
+      ${drillFeedback ? `<p class="feedback ${drillFeedback.ok ? "ok" : "bad"}">${drillFeedback.ok ? "Doğru." : "Yanlış — ana fikre dön."}</p><button class="btn btn-primary" id="next">Devam</button>` : ""}
+    </div></div>`);
+    if (!drillFeedback) {
+      item.options.forEach((opt, i) => {
+        const b = el(`<button type="button" class="btn diag-opt">${escapeHtml(opt)}</button>`);
+        b.addEventListener("click", () => {
+          const ok = i === item.a;
+          Progress.recordDrill("reading", ok);
+          drillFeedback = { ok };
+          render();
+        });
+        wrap.querySelector("#opts").appendChild(b);
+      });
+    }
+    wrap.querySelector("#next")?.addEventListener("click", () => {
+      drillFeedback = null;
+      drillIndex++;
+      render();
+    });
+    return wrap;
+  }
+
+  function renderSpeakDrill(state) {
+    const items = DRILLS.speak;
+    const item = items[Math.min(drillIndex, items.length - 1)];
+    const done = !!(state.speakDone || {})[item.id];
+    const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
+      <p class="eyebrow">Konuşma ${drillIndex + 1}/${items.length} · ${escapeHtml(item.level.toUpperCase())}</p>
+      <h1 class="diag-q">${escapeHtml(item.prompt)}</h1>
+      <p class="timer-display" id="timer">${speakLeft > 0 ? speakLeft + " sn" : item.seconds + " sn hazır"}</p>
+      <div class="card-actions">
+        <button class="btn btn-ghost" id="speak-start">${speakLeft > 0 ? "Durdur" : "Kronometre"}</button>
+        <button class="btn btn-primary" id="speak-done">${done ? "Tamamlandı ✓" : "Bitirdim"}</button>
+      </div>
+      <button class="btn btn-ghost" id="speak-next" style="width:100%;margin-top:8px">Sonraki prompt</button>
+      <button class="btn btn-ghost" id="drill-home" style="width:100%;margin-top:8px">YDS’ye dön</button>
+    </div></div>`);
+
+    wrap.querySelector("#speak-start").addEventListener("click", () => {
+      if (speakTimer) {
+        clearInterval(speakTimer);
+        speakTimer = null;
+        speakLeft = 0;
+        render();
+        return;
+      }
+      speakLeft = item.seconds;
+      speakPromptId = item.id;
+      speakTimer = setInterval(() => {
+        speakLeft--;
+        const t = document.getElementById("timer");
+        if (t) t.textContent = speakLeft > 0 ? speakLeft + " sn" : "Süre doldu";
+        if (speakLeft <= 0) {
+          clearInterval(speakTimer);
+          speakTimer = null;
+        }
+      }, 1000);
+      render();
+    });
+    wrap.querySelector("#speak-done").addEventListener("click", () => {
+      Progress.markSpeak(item.id);
+      if (speakTimer) { clearInterval(speakTimer); speakTimer = null; }
+      speakLeft = 0;
+      render();
+    });
+    wrap.querySelector("#speak-next").addEventListener("click", () => {
+      if (speakTimer) { clearInterval(speakTimer); speakTimer = null; }
+      speakLeft = 0;
+      drillIndex = (drillIndex + 1) % items.length;
+      render();
+    });
+    wrap.querySelector("#drill-home").addEventListener("click", () => {
+      if (speakTimer) { clearInterval(speakTimer); speakTimer = null; }
+      drillMode = null;
+      view = "yds";
+      render();
+    });
+    return wrap;
+  }
+
   function renderYds() {
+    const state = Progress.load();
+    const ds = state.drillStats || {};
     const ydsTasks = [];
     CURRICULUM.levels.forEach((level) => {
       level.units.forEach((unit) => {
@@ -526,7 +728,12 @@ const App = (() => {
       <div class="view-intro">
         <p class="eyebrow">Sınav hattı</p>
         <h1>YDS Yunanca</h1>
-        <p class="lede">YDS puanı okuma hızı, akademik kelime ve hata analizinden gelir. B2’den itibaren bu hat aktif; C2+ zirve denemeleri.</p>
+        <p class="lede">Cloze ${ds.clozeCorrect || 0}/${ds.clozeTotal || 0} · Okuma ${ds.readingCorrect || 0}/${ds.readingTotal || 0}</p>
+      </div>
+      <div class="drill-launch">
+        <button class="btn btn-primary" data-drill="cloze">Cloze seti</button>
+        <button class="btn btn-ghost sand-btn" data-drill="reading">Okuma seti</button>
+        <button class="btn btn-ghost sand-btn" data-drill="speak">Konuşma kronometre</button>
       </div>
       <div class="yds-grid">
         <article class="info-panel">
@@ -562,6 +769,12 @@ const App = (() => {
       startDeck("yds");
       render();
     });
+    section.querySelectorAll("[data-drill]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        startDrill(btn.dataset.drill);
+        render();
+      });
+    });
     return section;
   }
 
@@ -569,6 +782,7 @@ const App = (() => {
     const stats = Progress.overallStats();
     const hours = (stats.totalMinutes / 60).toFixed(1);
     const diag = state.lastDiagnostic;
+    const journal = state.journal || [];
     const section = el(`<section class="view progress-view">
       <div class="view-intro">
         <p class="eyebrow">İlerleme</p>
@@ -590,12 +804,44 @@ const App = (() => {
           : ""
       }
       <button class="btn btn-ghost sand-btn" id="rerun-diag">Teşhis sınavını yeniden çalıştır</button>
+      <article class="info-panel journal-panel">
+        <h3>Hata günlüğü</h3>
+        <p class="hint-inline">Yanlış soru, karışan yapı, unutulan kelime — buraya yaz.</p>
+        <form id="journal-form" class="journal-form">
+          <select name="tag">
+            <option value="yds">YDS</option>
+            <option value="grammar">Dilbilgisi</option>
+            <option value="vocab">Kelime</option>
+            <option value="genel">Genel</option>
+          </select>
+          <input name="text" type="text" maxlength="500" placeholder="Örn. αν + aorist karıştırdım" required />
+          <button type="submit" class="btn btn-primary">Ekle</button>
+        </form>
+        <ul class="journal-list" id="journal-list"></ul>
+      </article>
       <h3 class="section-title">Seviye kırılımı</h3>
       <ul class="break-list" id="break-list"></ul>
       <div class="danger-zone">
         <button class="btn btn-ghost" id="reset-btn">Tüm ilerlemeyi sıfırla</button>
       </div>
     </section>`);
+
+    const jlist = section.querySelector("#journal-list");
+    journal.slice(0, 20).forEach((j) => {
+      const li = el(`<li><span class="j-tag">${escapeHtml(j.tag)}</span><span class="j-text">${escapeHtml(j.text)}</span><button type="button" data-del="${j.id}" aria-label="Sil">×</button></li>`);
+      li.querySelector("button").addEventListener("click", () => {
+        Progress.removeJournal(j.id);
+        render();
+      });
+      jlist.appendChild(li);
+    });
+
+    section.querySelector("#journal-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      Progress.addJournal({ tag: fd.get("tag"), text: fd.get("text") });
+      render();
+    });
 
     const breakList = section.querySelector("#break-list");
     CURRICULUM.levels.forEach((level) => {
@@ -626,6 +872,10 @@ const App = (() => {
   }
 
   function init() {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
     render();
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(() => {});

@@ -847,6 +847,132 @@ select {
   color: var(--ink-soft);
 }
 
+.speak-row {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 8px;
+}
+
+.greek-line {
+  font-family: var(--font-greek) !important;
+}
+
+.feedback {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.feedback.ok {
+  background: #d8ebe4;
+  color: #1d5a48;
+}
+
+.feedback.bad {
+  background: #e8d9d5;
+  color: #6a3228;
+}
+
+.passage {
+  font-family: var(--font-greek);
+  line-height: 1.55;
+  color: var(--ink);
+  background: rgba(14, 61, 77, 0.06);
+  padding: 14px;
+  border-radius: 12px;
+  margin: 0 0 14px;
+  font-size: 0.98rem;
+}
+
+.wide-card {
+  width: min(520px, 100%);
+}
+
+.timer-display {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  text-align: center;
+  margin: 12px 0 18px;
+  color: var(--bg1);
+}
+
+.drill-launch {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 520px) {
+  .drill-launch {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.journal-panel {
+  margin: 14px 0;
+}
+
+.hint-inline {
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.journal-form {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.journal-form input,
+.journal-form select {
+  background: rgba(255, 253, 249, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.journal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.journal-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: start;
+  padding: 8px 10px;
+  background: rgba(14, 61, 77, 0.05);
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.j-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bg1);
+  margin-top: 2px;
+}
+
+.journal-list button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 .tabbar button {
   background: transparent;
   border: 0;

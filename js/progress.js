@@ -15,7 +15,10 @@ const Progress = (() => {
     displayName: "",
     cards: {},
     cardsReviewed: 0,
-    lastDiagnostic: null
+    lastDiagnostic: null,
+    journal: [],
+    drillStats: { clozeCorrect: 0, clozeTotal: 0, readingCorrect: 0, readingTotal: 0 },
+    speakDone: {}
   });
 
   function load() {
@@ -129,6 +132,52 @@ const Progress = (() => {
   function saveDiagnostic(result) {
     const state = load();
     state.lastDiagnostic = { ...result, at: new Date().toISOString() };
+    save(state);
+    return state;
+  }
+
+  function addJournal(entry) {
+    const state = load();
+    state.journal = state.journal || [];
+    state.journal.unshift({
+      id: "j" + Date.now(),
+      text: String(entry.text || "").slice(0, 500),
+      tag: entry.tag || "genel",
+      at: new Date().toISOString()
+    });
+    state.journal = state.journal.slice(0, 100);
+    touchActivity(state);
+    save(state);
+    return state;
+  }
+
+  function removeJournal(id) {
+    const state = load();
+    state.journal = (state.journal || []).filter((j) => j.id !== id);
+    save(state);
+    return state;
+  }
+
+  function recordDrill(kind, correct) {
+    const state = load();
+    state.drillStats = state.drillStats || { clozeCorrect: 0, clozeTotal: 0, readingCorrect: 0, readingTotal: 0 };
+    if (kind === "cloze") {
+      state.drillStats.clozeTotal++;
+      if (correct) state.drillStats.clozeCorrect++;
+    } else if (kind === "reading") {
+      state.drillStats.readingTotal++;
+      if (correct) state.drillStats.readingCorrect++;
+    }
+    touchActivity(state);
+    save(state);
+    return state;
+  }
+
+  function markSpeak(id) {
+    const state = load();
+    state.speakDone = state.speakDone || {};
+    state.speakDone[id] = new Date().toISOString();
+    touchActivity(state);
     save(state);
     return state;
   }
@@ -263,6 +312,10 @@ const Progress = (() => {
     todayStr,
     reviewCard,
     saveDiagnostic,
-    cardKey
+    cardKey,
+    addJournal,
+    removeJournal,
+    recordDrill,
+    markSpeak
   };
 })();
