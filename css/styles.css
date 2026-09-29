@@ -1054,6 +1054,39 @@ select {
   font-size: 1.1rem;
 }
 
+.gk-board {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.gk-row {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.gk-key {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 0;
+  background: rgba(14, 61, 77, 0.08);
+  color: var(--ink);
+  font-family: var(--font-greek);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.gk-key:active {
+  background: rgba(212, 160, 23, 0.28);
+}
+
+.gk-key.wide {
+  grid-column: span 2;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+}
+
 .center-soft {
   text-align: center;
   margin: 0 0 10px !important;

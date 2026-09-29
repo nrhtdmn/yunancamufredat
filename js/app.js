@@ -21,6 +21,36 @@ const App = (() => {
   let challengeQueue = [];
   let challengeIndex = 0;
 
+  function attachGreekKeyboard(form, inputName) {
+    const input = form.querySelector(`[name="${inputName}"]`);
+    if (!input) return;
+    const rows = [
+      ["α", "β", "γ", "δ", "ε", "ζ", "η", "θ"],
+      ["ι", "κ", "λ", "μ", "ν", "ξ", "ο", "π"],
+      ["ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω"],
+      ["ά", "έ", "ή", "ί", "ό", "ύ", "ώ", "ς"],
+      [" ", "⌫", "·", ";", "!", "?", ",", "."]
+    ];
+    const board = el(`<div class="gk-board" aria-label="Yunanca klavye"></div>`);
+    rows.forEach((row) => {
+      const r = el(`<div class="gk-row"></div>`);
+      row.forEach((ch) => {
+        const b = el(`<button type="button" class="gk-key ${ch === " " ? "wide" : ""}">${ch === " " ? "boşluk" : escapeHtml(ch)}</button>`);
+        b.addEventListener("click", () => {
+          if (ch === "⌫") {
+            input.value = input.value.slice(0, -1);
+          } else {
+            input.value += ch;
+          }
+          input.focus();
+        });
+        r.appendChild(b);
+      });
+      board.appendChild(r);
+    });
+    form.appendChild(board);
+  }
+
   function speakGreek(text) {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
@@ -846,6 +876,7 @@ const App = (() => {
     if (!trainerFeedback) {
       if (trainerQ.input) {
         const form = el(`<form class="dict-form"><input name="ans" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Yunanca yaz…" required /><button class="btn btn-primary" type="submit">Kontrol</button></form>`);
+        attachGreekKeyboard(form, "ans");
         form.addEventListener("submit", (e) => {
           e.preventDefault();
           const val = new FormData(e.target).get("ans");
