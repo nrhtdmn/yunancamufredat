@@ -28,6 +28,9 @@ const App = (() => {
   let ttsRate = 0.9;
   let activeTaskId = null;
   let lessonReturnView = "today";
+  let patternFilterCat = "all";
+  let patternFilterLevel = "all";
+  let patternSearch = "";
 
   function attachGreekKeyboard(form, inputName) {
     const input = form.querySelector(`[name="${inputName}"]`);
@@ -271,6 +274,7 @@ const App = (() => {
       <nav class="tabbar" aria-label="Ana menü">
         <button data-view="today" class="${view === "today" ? "active" : ""}"><span class="tab-icon">◎</span>Bugün</button>
         <button data-view="roadmap" class="${view === "roadmap" || view === "level" ? "active" : ""}"><span class="tab-icon">☰</span>Yol</button>
+        <button data-view="patterns" class="${view === "patterns" ? "active" : ""}"><span class="tab-icon">◇</span>Kalıp</button>
         <button data-view="cards" class="${view === "cards" ? "active" : ""}"><span class="tab-icon">Α</span>Kart</button>
         <button data-view="yds" class="${view === "yds" ? "active" : ""}"><span class="tab-icon">✦</span>YDS</button>
         <button data-view="progress" class="${view === "progress" ? "active" : ""}"><span class="tab-icon">▣</span>İlerleme</button>
@@ -291,6 +295,7 @@ const App = (() => {
     else if (view === "roadmap") main.appendChild(renderRoadmap());
     else if (view === "level") main.appendChild(renderLevel(selectedLevelId || state.currentLevelId));
     else if (view === "lesson") main.appendChild(renderLesson(state));
+    else if (view === "patterns") main.appendChild(renderPatternsBank());
     else if (view === "cards") main.appendChild(renderCards(state));
     else if (view === "yds") main.appendChild(renderYds());
     else if (view === "progress") main.appendChild(renderProgress(state));
@@ -343,7 +348,7 @@ const App = (() => {
       <div class="today-actions">
         <button type="button" class="btn btn-primary" id="go-cards">Kartlar</button>
         <button type="button" class="btn btn-ghost" data-train="flash5">Hızlı 5</button>
-        <button type="button" class="btn btn-ghost" data-train="pattern">Kalıp</button>
+        <button type="button" class="btn btn-ghost" id="go-patterns">Kalıp</button>
       </div>
 
       <details class="plan-fold">
@@ -386,6 +391,11 @@ const App = (() => {
       view = "cards";
       cardDeckId = deckId;
       startDeck(deckId);
+      render();
+    });
+
+    section.querySelector("#go-patterns")?.addEventListener("click", () => {
+      view = "patterns";
       render();
     });
 
@@ -2281,7 +2291,8 @@ const App = (() => {
       <div class="launch-stack launch-slim">
         <button type="button" class="btn btn-primary" data-train="challenge">Challenge</button>
         <button type="button" class="btn btn-primary" data-train="flash5">Hızlı 5</button>
-        <button type="button" class="btn btn-primary" data-train="pattern">Kalıplar</button>
+        <button type="button" class="btn btn-primary" id="open-pattern-bank">Tüm kalıplar</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="pattern">Kalıp antrenmanı</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="speed10">Hızlı 10</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="exam">Sınav</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="review">Yanlışlar (${wrongN})</button>
@@ -2297,6 +2308,101 @@ const App = (() => {
           <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
         </div>
       </details>`;
+  }
+
+  function renderPatternsBank() {
+    const bank = typeof PATTERNS !== "undefined" && Array.isArray(PATTERNS.bank) ? PATTERNS.bank : [];
+    const cats = [...new Set(bank.map((p) => p.cat))].sort((a, b) => a.localeCompare(b, "tr"));
+    const levels = [...new Set(bank.map((p) => p.level))].sort((a, b) => {
+      const order = ["a0", "a1", "a2", "b1", "b2", "c1", "c2"];
+      return order.indexOf(a) - order.indexOf(b);
+    });
+    const q = (patternSearch || "").trim().toLowerCase();
+    const filtered = bank.filter((p) => {
+      if (patternFilterCat !== "all" && p.cat !== patternFilterCat) return false;
+      if (patternFilterLevel !== "all" && p.level !== patternFilterLevel) return false;
+      if (!q) return true;
+      const hay = `${p.frame} ${p.eg} ${p.tr} ${p.cat}`.toLowerCase();
+      return hay.includes(q);
+    });
+
+    const catOptions = [`<option value="all">Tüm kategoriler</option>`]
+      .concat(cats.map((c) => `<option value="${escapeHtml(c)}" ${patternFilterCat === c ? "selected" : ""}>${escapeHtml(c)}</option>`))
+      .join("");
+    const levelOptions = [`<option value="all">Tüm seviyeler</option>`]
+      .concat(
+        levels.map(
+          (lv) =>
+            `<option value="${escapeHtml(lv)}" ${patternFilterLevel === lv ? "selected" : ""}>${escapeHtml(
+              String(lv).toUpperCase()
+            )}</option>`
+        )
+      )
+      .join("");
+
+    const section = el(`<section class="view patterns-view">
+      <div class="view-intro">
+        <p class="eyebrow">Cümle iskeletleri</p>
+        <h1>Kalıp bankası</h1>
+        <p class="lede">${bank.length} kalıp · gösterilen ${filtered.length}</p>
+      </div>
+      <div class="pattern-filters">
+        <input type="search" id="pattern-q" class="pattern-search" placeholder="Ara: iskelet, örnek, Türkçe…" value="${escapeHtml(
+          patternSearch
+        )}" autocomplete="off" />
+        <div class="pattern-filter-row">
+          <select id="pattern-cat" aria-label="Kategori">${catOptions}</select>
+          <select id="pattern-level" aria-label="Seviye">${levelOptions}</select>
+        </div>
+        <div class="launch-stack launch-slim" style="margin-top:8px">
+          <button type="button" class="btn btn-ghost sand-btn" id="pattern-train-go">Kalıp antrenmanı</button>
+          <button type="button" class="btn btn-ghost sand-btn" id="pattern-fill-go">Kalıp doldur</button>
+        </div>
+      </div>
+      <ul class="pattern-list" id="pattern-list"></ul>
+      ${filtered.length ? "" : `<p class="meta sand-meta">Eşleşen kalıp yok. Filtreyi temizle.</p>`}
+    </section>`);
+
+    const list = section.querySelector("#pattern-list");
+    filtered.forEach((p, i) => {
+      const li = el(`<li class="pattern-item">
+        <button type="button" class="pattern-card" data-i="${i}">
+          <span class="pattern-meta"><span class="pill muted">${escapeHtml(
+            String(p.level || "").toUpperCase()
+          )}</span><span class="pill muted">${escapeHtml(p.cat || "")}</span></span>
+          <strong class="pattern-frame">${escapeHtml(p.frame)}</strong>
+          <span class="pattern-eg">${escapeHtml(p.eg)}</span>
+          <span class="pattern-tr">${escapeHtml(p.tr)}</span>
+        </button>
+      </li>`);
+      li.querySelector("button").addEventListener("click", () => speakGreek(p.eg));
+      list.appendChild(li);
+    });
+
+    const applyFilters = () => {
+      patternSearch = section.querySelector("#pattern-q").value || "";
+      patternFilterCat = section.querySelector("#pattern-cat").value || "all";
+      patternFilterLevel = section.querySelector("#pattern-level").value || "all";
+      render();
+    };
+
+    let searchTimer = null;
+    section.querySelector("#pattern-q").addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applyFilters, 180);
+    });
+    section.querySelector("#pattern-cat").addEventListener("change", applyFilters);
+    section.querySelector("#pattern-level").addEventListener("change", applyFilters);
+    section.querySelector("#pattern-train-go").addEventListener("click", () => {
+      startTrainer("pattern");
+      render();
+    });
+    section.querySelector("#pattern-fill-go").addEventListener("click", () => {
+      startTrainer("patternfill");
+      render();
+    });
+
+    return section;
   }
 
   function renderCards(state) {
@@ -2390,6 +2496,10 @@ const App = (() => {
           startTrainer(btn.dataset.train);
           render();
         });
+      });
+      section.querySelector("#open-pattern-bank")?.addEventListener("click", () => {
+        view = "patterns";
+        render();
       });
       return section;
     }
