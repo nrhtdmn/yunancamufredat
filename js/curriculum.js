@@ -406,20 +406,19 @@ const CURRICULUM = {
   },
 
   resources: [
-    { title: "Duolingo / Drop Greek", note: "Isınma ve streak — asıl öğrenme Οδηγός görevlerinde." },
-    { title: "GreekPod101 / Easy Greek", note: "Dinleme ve doğal diyalog." },
-    { title: "News in Slow Greek / ERT", note: "B1+ haber ve medya." },
-    { title: "Modern Greek Grammar (Holton vd.)", note: "Referans dilbilgisi." },
-    { title: "YDS Yunanca soru bankaları", note: "B2’den itibaren haftalık deneme parçaları." },
-    { title: "Anki / kelime kartı", note: "Aktif kelimeyi uzun vadede tut." }
+    { title: "Οδηγός dersleri", note: "Her görevde Konu · Örnek · Şimdi yap · Alıştırma — dış kaynak gerekmez." },
+    { title: "Kartlar & antrenmanlar", note: "Alfabe, madde, aorist, YDS cloze… derslerin pratik motoru." },
+    { title: "YDS sekmesi", note: "Cloze ve okuma setleri uygulama içinde." },
+    { title: "Hata günlüğü", note: "Yanlışları İlerleme’de tut; aynı tuzağı kes." }
   ],
 
   principles: [
-    "Her gün en az bir görev tamamla — mükemmellik değil süreklilik kazanır.",
-    "Önce anla, sonra üret: dinle/oku → not al → yaz/konuş.",
-    "Aorist ile imperfect’i karıştırma; Yunanca’da aspect kritiktir.",
-    "YDS puanı okuma + kelime + stratejiden gelir; sadece dilbilgisi yetmez.",
-    "Zayıf birimi atlama. Kapı sınavını geçmeden bir sonraki seviyeye geçme.",
-    "Kaynak çokluğu düşmanıdır: Οδηγός ne dediyse onu bitir, sonra ekle."
+    "Her gün en az bir dersi aç ve bitir — mükemmellik değil süreklilik.",
+    "Ders sayfası yeter: konu + örnek + adımlar. Başka kitaba bakmak zorunda değilsin.",
+    "Önce anla, sonra üret: oku/dinle → not → yaz/konuş.",
+    "Aorist ile imperfect’i karıştırma; aspect kritiktir.",
+    "YDS puanı okuma + kelime + stratejiden gelir.",
+    "Kapı sınavını geçmeden sonraki seviyeyi zorlama.",
+    "Kaynak çokluğu düşmandır: Οδηγός ne dediyse onu bitir."
   ]
 };

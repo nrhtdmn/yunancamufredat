@@ -26,6 +26,8 @@ const App = (() => {
   let matchSelected = null;
   let matchLocked = false;
   let ttsRate = 0.9;
+  let activeTaskId = null;
+  let lessonReturnView = "today";
 
   function attachGreekKeyboard(form, inputName) {
     const input = form.querySelector(`[name="${inputName}"]`);
@@ -288,6 +290,7 @@ const App = (() => {
     if (view === "today") main.appendChild(renderToday(state));
     else if (view === "roadmap") main.appendChild(renderRoadmap());
     else if (view === "level") main.appendChild(renderLevel(selectedLevelId || state.currentLevelId));
+    else if (view === "lesson") main.appendChild(renderLesson(state));
     else if (view === "cards") main.appendChild(renderCards(state));
     else if (view === "yds") main.appendChild(renderYds());
     else if (view === "progress") main.appendChild(renderProgress(state));
@@ -331,7 +334,8 @@ const App = (() => {
                 ${typeBadge(next.task.type)}
                 <span class="meta">~${next.task.minutes} dk · ${escapeHtml(next.unit.title)}</span>
               </div>
-              <button class="btn btn-primary" data-do="${next.task.id}" data-min="${next.task.minutes}">Tamamladım</button>
+              <button class="btn btn-primary" data-open-lesson="${next.task.id}">Dersi aç</button>
+              <button class="btn btn-ghost" data-do="${next.task.id}" data-min="${next.task.minutes}">Tamamladım</button>
             </article>`
           : `<article class="focus-card done"><h2>Bugün bitti</h2><p>Plan tamam. Kart veya hızlı tur ile pekiştir.</p></article>`
       }
@@ -374,6 +378,10 @@ const App = (() => {
       render();
     });
 
+    section.querySelector("[data-open-lesson]")?.addEventListener("click", (e) => {
+      openLesson(e.currentTarget.dataset.openLesson, "today");
+    });
+
     section.querySelector("#go-cards")?.addEventListener("click", () => {
       view = "cards";
       cardDeckId = deckId;
@@ -395,22 +403,168 @@ const App = (() => {
     return section;
   }
 
+  function findTaskMeta(taskId) {
+    for (const level of CURRICULUM.levels) {
+      for (const unit of level.units) {
+        const task = unit.tasks.find((t) => t.id === taskId);
+        if (task) return { level, unit, task };
+      }
+    }
+    return null;
+  }
+
+  function openLesson(taskId, fromView) {
+    activeTaskId = taskId;
+    lessonReturnView = fromView || view || "today";
+    view = "lesson";
+    render();
+  }
+
+  function renderLesson(state) {
+    const meta = findTaskMeta(activeTaskId);
+    if (!meta) {
+      view = lessonReturnView || "today";
+      return renderToday(state);
+    }
+    const { level, unit, task } = meta;
+    const lesson = typeof Lessons !== "undefined" ? Lessons.get(task.id) : null;
+    const done = Progress.isDone(task.id);
+    const typeLabel = (CURRICULUM.typeLabels && CURRICULUM.typeLabels[task.type]) || task.type;
+
+    const theoryHtml = (lesson?.theory || [task.detail])
+      .map((p) => `<p class="lesson-p">${escapeHtml(p)}</p>`)
+      .join("");
+    const examples = lesson?.examples || [];
+    const steps = lesson?.steps || [];
+    const practice = lesson?.practice || [];
+    const check = lesson?.check || [];
+    const table = lesson?.table;
+
+    const section = el(`<section class="view lesson-view">
+      <button class="back" id="lesson-back">← Geri</button>
+      <header class="lesson-hero">
+        <p class="eyebrow">${escapeHtml(level.code)} · ${escapeHtml(unit.title)} · ${escapeHtml(typeLabel)} · ~${task.minutes} dk</p>
+        <h1>${escapeHtml(task.title)}</h1>
+        <p class="lede">${escapeHtml(lesson?.goal || task.detail)}</p>
+      </header>
+
+      <article class="lesson-block">
+        <h2>Konu</h2>
+        ${theoryHtml}
+      </article>
+
+      ${
+        table
+          ? `<article class="lesson-block">
+              <h2>${escapeHtml(table.title || "Tablo")}</h2>
+              <div class="lesson-table-wrap"><table class="lesson-table">
+                <thead><tr>${(table.headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+                <tbody>${(table.rows || [])
+                  .map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`)
+                  .join("")}</tbody>
+              </table></div>
+            </article>`
+          : ""
+      }
+
+      ${
+        examples.length
+          ? `<article class="lesson-block">
+              <h2>Örnekler</h2>
+              <ul class="lesson-examples" id="lesson-ex"></ul>
+            </article>`
+          : ""
+      }
+
+      ${
+        steps.length
+          ? `<article class="lesson-block">
+              <h2>Şimdi yap</h2>
+              <ol class="lesson-steps">${steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ol>
+            </article>`
+          : ""
+      }
+
+      ${
+        practice.length
+          ? `<article class="lesson-block">
+              <h2>Alıştırma</h2>
+              <ul class="lesson-steps">${practice.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>
+            </article>`
+          : ""
+      }
+
+      ${
+        check.length
+          ? `<article class="lesson-block">
+              <h2>Bitirmeden kontrol</h2>
+              <ul class="lesson-check">${check.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>
+            </article>`
+          : ""
+      }
+
+      <div class="lesson-actions">
+        ${lesson?.train ? `<button type="button" class="btn btn-ghost" id="lesson-train">İlgili antrenman</button>` : ""}
+        <button type="button" class="btn btn-primary" id="lesson-done">${done ? "Tamamlandı ✓ (geri al)" : "Dersi tamamladım"}</button>
+      </div>
+    </section>`);
+
+    const exList = section.querySelector("#lesson-ex");
+    if (exList) {
+      examples.forEach((item) => {
+        const li = el(`<li>
+          <button type="button" class="lesson-ex-btn">
+            <span class="greek-line">${escapeHtml(item.el)}</span>
+            <span class="meta">${escapeHtml(item.tr || "")}</span>
+          </button>
+        </li>`);
+        li.querySelector("button").addEventListener("click", () => speakGreek(item.el));
+        exList.appendChild(li);
+      });
+    }
+
+    section.querySelector("#lesson-back").onclick = () => {
+      activeTaskId = null;
+      view = lessonReturnView || "today";
+      render();
+    };
+    section.querySelector("#lesson-done").onclick = () => {
+      Progress.toggleTask(task.id, task.minutes || 0);
+      render();
+    };
+    section.querySelector("#lesson-train")?.addEventListener("click", () => {
+      startTrainer(lesson.train);
+      render();
+    });
+
+    return section;
+  }
+
   function taskRow(level, unit, task) {
     const done = Progress.isDone(task.id);
     const row = el(`<li class="task-row ${done ? "is-done" : ""}">
       <button class="check" aria-pressed="${done}" aria-label="Görevi işaretle"></button>
-      <div class="task-body">
+      <div class="task-body" role="button" tabindex="0">
         <div class="task-title-row">
           <strong>${escapeHtml(task.title)}</strong>
           ${typeBadge(task.type)}
         </div>
         <p>${escapeHtml(task.detail)}</p>
-        <span class="meta">${escapeHtml(level.code)} · ${escapeHtml(unit.title)} · ~${task.minutes} dk</span>
+        <span class="meta">${escapeHtml(level.code)} · ${escapeHtml(unit.title)} · ~${task.minutes} dk · Dersi aç</span>
       </div>
     </li>`);
-    row.querySelector(".check").addEventListener("click", () => {
+    row.querySelector(".check").addEventListener("click", (e) => {
+      e.stopPropagation();
       Progress.toggleTask(task.id, task.minutes || 0);
       render();
+    });
+    const open = () => openLesson(task.id, view === "level" ? "level" : view === "yds" ? "yds" : "roadmap");
+    row.querySelector(".task-body").addEventListener("click", open);
+    row.querySelector(".task-body").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        open();
+      }
     });
     return row;
   }
@@ -481,8 +635,7 @@ const App = (() => {
         li.querySelector("button").addEventListener("click", () => {
           selectedLevelId = level.id;
           Progress.setLevel(level.id);
-          view = "level";
-          render();
+          openLesson(task.id, "roadmap");
         });
         hits.appendChild(li);
       });
