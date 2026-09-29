@@ -314,6 +314,29 @@ const TRAINERS = {
     { tr: "kış", el: "χειμώνας" }
   ],
 
+  weekdays: [
+    { tr: "Pazartesi", el: "Δευτέρα" },
+    { tr: "Salı", el: "Τρίτη" },
+    { tr: "Çarşamba", el: "Τετάρτη" },
+    { tr: "Perşembe", el: "Πέμπτη" },
+    { tr: "Cuma", el: "Παρασκευή" },
+    { tr: "Cumartesi", el: "Σάββατο" },
+    { tr: "Pazar", el: "Κυριακή" }
+  ],
+
+  tips: [
+    "Yunanca’da aspect kritik: aorist = bir kez/bitmiş, imperfect = süre/alışkanlık.",
+    "να + aorist (να γράψω) bir kez; να + present (να γράφω) sürekli.",
+    "YDS’de önce ana fikir, sonra seçenek — tuzak kelimelere aldanma.",
+    "Her yanlış için hata günlüğü: aynı tip tekrar etmesin.",
+    "Madde (ο/η/το) ezberi kelimeyle birlikte yapılmalı.",
+    "Kaynak çokluğu düşmandır: Οδηγός ne dediyse onu bitir.",
+    "Konuşmayı kaydet; dolgu seslerini (εεε) fark et.",
+    "έχω + aparemphato = perfect (έχω γράψει): geçmişin şimdiki sonucu.",
+    "Cloze’da önce dilbilgisi ipucu, sonra kolokasyon.",
+    "Günde az ama her gün > haftada bir uzun oturum."
+  ],
+
   genitive: [
     { tr: "evin kapısı", el: "η πόρτα του σπιτιού", tip: "genitif sahiplik" },
     { tr: "çocuğun kitabı", el: "το βιβλίο του παιδιού", tip: "" },

@@ -326,6 +326,10 @@ const App = (() => {
           )
           .join("")}
       </div>
+      <article class="tip-card">
+        <p class="eyebrow" style="color:var(--bg1)">Günün ipucu</p>
+        <p>${escapeHtml(TRAINERS.tips[new Date().getDate() % TRAINERS.tips.length])}</p>
+      </article>
       ${
         next
           ? `<article class="focus-card">
@@ -957,6 +961,19 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "weekdays") {
+      const item = TRAINERS.weekdays[Math.floor(Math.random() * TRAINERS.weekdays.length)];
+      const wrong = shuffle(TRAINERS.weekdays.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "weekdays",
+        prompt: item.tr,
+        sub: "Yunancası?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "genitive") {
       const item = TRAINERS.genitive[Math.floor(Math.random() * TRAINERS.genitive.length)];
       const wrong = shuffle(TRAINERS.genitive.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
@@ -1020,6 +1037,7 @@ const App = (() => {
     imperative: "Emir kipi",
     perfect: "Perfect",
     months: "Ay / mevsim",
+    weekdays: "Haftanın günleri",
     genitive: "Genitif",
     match: "Eşleştir",
     review: "Yanlış tekrarı",
@@ -1409,6 +1427,7 @@ const App = (() => {
         <button type="button" class="btn btn-ghost sand-btn" data-train="conditional">αν (${ts.conditional || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="number">Sayı (${ts.number || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="months">Ay (${ts.months || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="weekdays">Gün (${ts.weekdays || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="genitive">Genitif (${ts.genitive || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="match">Eşleştir (${ts.match || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="time">Saat (${ts.time || 0})</button>

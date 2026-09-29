@@ -1361,6 +1361,20 @@ select {
 .heat.h2 { background: rgba(42, 122, 104, 0.65); }
 .heat.h3 { background: rgba(212, 160, 23, 0.85); }
 
+.tip-card {
+  background: rgba(255, 253, 249, 0.9);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border-left: 4px solid var(--sun);
+}
+
+.tip-card p:last-child {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
 .tabbar button {
   background: transparent;
   border: 0;
