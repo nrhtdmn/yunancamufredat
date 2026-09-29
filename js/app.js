@@ -256,11 +256,21 @@ const App = (() => {
     const dueHint = CONTENT.decks[deckId] ? CONTENT.decks[deckId].length : 0;
 
     const todayMins = (state.studyLog || {})[Progress.todayStr()] || 0;
+    const week = Progress.weekActivity();
+    const ts = state.trainerStats || {};
     const section = el(`<section class="view today-view">
       <div class="hero-today">
         <p class="eyebrow">Bugünün emri</p>
         <h1>Merhaba${name}</h1>
         <p class="lede">Aktif seviye: <strong>${escapeHtml(level.code)} · ${escapeHtml(level.title)}</strong> — ${escapeHtml(plan.label)} · bugün ${todayMins} dk</p>
+      </div>
+      <div class="week-strip" aria-label="Son 7 gün">
+        ${week
+          .map(
+            (d) =>
+              `<div class="week-day ${d.active ? "on" : ""}" title="${d.key}${d.mins ? " · " + d.mins + " dk" : ""}"><span>${d.label}</span><i></i></div>`
+          )
+          .join("")}
       </div>
       ${
         next
@@ -293,10 +303,7 @@ const App = (() => {
           <button type="submit" class="btn btn-ghost">+ dk</button>
         </form>
       </article>
-      <div class="quick-train">
-        <button type="button" class="btn btn-ghost sand-btn" data-train="alpha">Alfabe</button>
-        <button type="button" class="btn btn-ghost sand-btn" data-train="verb">Fiil çekimi</button>
-      </div>
+      ${trainerButtons(ts)}
       <div class="section-head">
         <h3>Bugünkü plan</h3>
         <select id="mode-select" aria-label="Günlük tempo">
@@ -490,35 +497,114 @@ const App = (() => {
     trainerQ = nextTrainerQuestion(mode);
   }
 
+  function normalizeGreek(s) {
+    return String(s || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ς/g, "σ")
+      .replace(/[^a-zα-ωίϊΐύϋΰέάόήώ\s]/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   function nextTrainerQuestion(mode) {
     if (mode === "alpha") {
       const item = TRAINERS.alphabet[Math.floor(Math.random() * TRAINERS.alphabet.length)];
       const wrong = shuffle(TRAINERS.alphabet.filter((x) => x.name !== item.name)).slice(0, 3).map((x) => x.name);
-      const options = shuffle([item.name, ...wrong]);
-      return { kind: "alpha", prompt: item.ch, sub: "Harfin adı?", answer: item.name, options, speak: item.ch.split(" ")[0] };
+      return {
+        kind: "alpha",
+        prompt: item.ch,
+        sub: "Harfin adı?",
+        answer: item.name,
+        options: shuffle([item.name, ...wrong]),
+        speak: item.ch.split(" ")[0],
+        input: false
+      };
+    }
+    if (mode === "gender") {
+      const item = TRAINERS.gender[Math.floor(Math.random() * TRAINERS.gender.length)];
+      return {
+        kind: "gender",
+        prompt: item.noun,
+        sub: `${item.tr} — doğru madde?`,
+        answer: item.art,
+        options: shuffle(["ο", "η", "το"]),
+        speak: item.art + " " + item.noun,
+        input: false
+      };
+    }
+    if (mode === "aspect") {
+      const item = TRAINERS.aspect[Math.floor(Math.random() * TRAINERS.aspect.length)];
+      return {
+        kind: "aspect",
+        prompt: item.tr,
+        sub: "Aorist mi, imperfect mi?",
+        answer: item.answer,
+        options: ["aorist", "imperfect"],
+        hint: `aorist: ${item.aorist} · imperfect: ${item.imperfect}`,
+        speak: item.answer === "aorist" ? item.aorist : item.imperfect,
+        input: false
+      };
+    }
+    if (mode === "number") {
+      const item = TRAINERS.numbers[Math.floor(Math.random() * TRAINERS.numbers.length)];
+      const wrong = shuffle(TRAINERS.numbers.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "number",
+        prompt: String(item.n),
+        sub: "Yunancası?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "dictation") {
+      const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
+      return {
+        kind: "dictation",
+        prompt: "Dinle ve yaz",
+        sub: "Duyduğun Yunanca cümleyi yaz (aksan şart değil)",
+        answer: phrase,
+        options: null,
+        speak: phrase,
+        input: true,
+        autoSpeak: true
+      };
     }
     const verb = TRAINERS.verbs[Math.floor(Math.random() * TRAINERS.verbs.length)];
     const form = verb.forms[Math.floor(Math.random() * verb.forms.length)];
     const pool = TRAINERS.verbs.flatMap((v) => v.forms.map((f) => f.f));
     const wrong = shuffle(pool.filter((f) => f !== form.f)).slice(0, 3);
-    const options = shuffle([form.f, ...wrong]);
     return {
       kind: "verb",
       prompt: `${verb.infinitive} (${verb.gloss})`,
       sub: `${form.p} → ?`,
       answer: form.f,
-      options,
-      speak: form.f
+      options: shuffle([form.f, ...wrong]),
+      speak: form.f,
+      input: false
     };
   }
 
+  const TRAINER_TITLES = {
+    alpha: "Alfabe",
+    verb: "Fiil çekimi",
+    gender: "Madde (ο/η/το)",
+    aspect: "Aorist / Imperfect",
+    number: "Sayılar",
+    dictation: "Dikte"
+  };
+
   function renderTrainer() {
     if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode);
-    const title = trainerMode === "alpha" ? "Alfabe" : "Fiil çekimi";
+    const title = TRAINER_TITLES[trainerMode] || "Antrenman";
     const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
       <p class="eyebrow">${escapeHtml(title)} · ${trainerScore.ok}/${trainerScore.n}</p>
-      <h1 class="diag-q greek-line">${escapeHtml(trainerQ.prompt)}</h1>
+      <h1 class="diag-q ${trainerMode === "number" || trainerMode === "aspect" ? "" : "greek-line"}">${escapeHtml(trainerQ.prompt)}</h1>
       <p class="lede center-soft">${escapeHtml(trainerQ.sub)}</p>
+      ${trainerQ.hint && trainerFeedback ? `<p class="meta center-soft">${escapeHtml(trainerQ.hint)}</p>` : ""}
       <button type="button" class="btn btn-ghost" id="say-q">♪ Dinle</button>
       <div class="diag-opts" id="opts"></div>
       ${trainerFeedback ? `<p class="feedback ${trainerFeedback.ok ? "ok" : "bad"}">${escapeHtml(trainerFeedback.msg)}</p><button class="btn btn-primary" id="next">Sonraki</button>` : ""}
@@ -526,23 +612,39 @@ const App = (() => {
     </div></div>`);
 
     wrap.querySelector("#say-q").addEventListener("click", () => speakGreek(trainerQ.speak || trainerQ.prompt));
+    if (trainerQ.autoSpeak && !trainerFeedback) {
+      setTimeout(() => speakGreek(trainerQ.speak), 250);
+    }
+
+    const finish = (ok, msg) => {
+      trainerScore.n++;
+      if (ok) trainerScore.ok++;
+      Progress.bumpTrainer(trainerMode);
+      trainerFeedback = { ok, msg };
+      render();
+    };
 
     if (!trainerFeedback) {
-      trainerQ.options.forEach((opt) => {
-        const b = el(`<button type="button" class="btn diag-opt">${escapeHtml(opt)}</button>`);
-        b.addEventListener("click", () => {
-          const ok = opt === trainerQ.answer;
-          trainerScore.n++;
-          if (ok) trainerScore.ok++;
-          Progress.bumpTrainer(trainerMode === "alpha" ? "alpha" : "verb");
-          trainerFeedback = {
-            ok,
-            msg: ok ? "Doğru." : `Yanlış. Doğru: ${trainerQ.answer}`
-          };
-          render();
+      if (trainerQ.input) {
+        const form = el(`<form class="dict-form"><input name="ans" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Yunanca yaz…" required /><button class="btn btn-primary" type="submit">Kontrol</button></form>`);
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const val = new FormData(e.target).get("ans");
+          const ok = normalizeGreek(val) === normalizeGreek(trainerQ.answer);
+          finish(ok, ok ? "Doğru." : `Yanlış. Doğru: ${trainerQ.answer}`);
         });
-        wrap.querySelector("#opts").appendChild(b);
-      });
+        wrap.querySelector("#opts").appendChild(form);
+      } else {
+        trainerQ.options.forEach((opt) => {
+          const label = opt === "aorist" ? "Aorist (tek olay)" : opt === "imperfect" ? "Imperfect (süre/alışkanlık)" : opt;
+          const b = el(`<button type="button" class="btn diag-opt">${escapeHtml(label)}</button>`);
+          b.addEventListener("click", () => {
+            const ok = opt === trainerQ.answer;
+            finish(ok, ok ? "Doğru." : `Yanlış. Doğru: ${trainerQ.answer}${trainerQ.hint ? " — " + trainerQ.hint : ""}`);
+          });
+          wrap.querySelector("#opts").appendChild(b);
+        });
+      }
     }
 
     wrap.querySelector("#next")?.addEventListener("click", () => {
@@ -560,6 +662,18 @@ const App = (() => {
     return wrap;
   }
 
+  function trainerButtons(ts) {
+    return `
+      <div class="quick-train multi">
+        <button type="button" class="btn btn-ghost sand-btn" data-train="alpha">Alfabe (${ts.alpha || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="verb">Fiil (${ts.verb || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="gender">Madde (${ts.gender || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="aspect">Aspect (${ts.aspect || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="number">Sayı (${ts.number || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="dictation">Dikte (${ts.dictation || 0})</button>
+      </div>`;
+  }
+
   function renderCards(state) {
     const deckIds = Object.keys(CONTENT.decks);
     const ts = state.trainerStats || {};
@@ -570,10 +684,7 @@ const App = (() => {
           <h1>Kartlar</h1>
           <p class="lede">Leitner kutuları: bilmediğin kartlar sık döner. Önce Yunanca gör, çevir, işaretle.</p>
         </div>
-        <div class="quick-train">
-          <button type="button" class="btn btn-ghost sand-btn" data-train="alpha">Alfabe (${ts.alpha || 0})</button>
-          <button type="button" class="btn btn-ghost sand-btn" data-train="verb">Fiil çekimi (${ts.verb || 0})</button>
-        </div>
+        ${trainerButtons(ts)}
         <ul class="deck-grid" id="deck-grid"></ul>
         <p class="meta sand-meta">Toplam kart tekrarı: ${state.cardsReviewed || 0}</p>
       </section>`);

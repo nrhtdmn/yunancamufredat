@@ -104,7 +104,97 @@ const TRAINERS = {
         { p: "εσείς", f: "κάνετε" },
         { p: "αυτοί/ές/ά", f: "κάνουν" }
       ]
+    },
+    {
+      id: "milo",
+      infinitive: "μιλάω",
+      gloss: "konuşmak",
+      forms: [
+        { p: "εγώ", f: "μιλάω" },
+        { p: "εσύ", f: "μιλάς" },
+        { p: "αυτός/ή/ό", f: "μιλάει" },
+        { p: "εμείς", f: "μιλάμε" },
+        { p: "εσείς", f: "μιλάτε" },
+        { p: "αυτοί/ές/ά", f: "μιλάνε" }
+      ]
+    },
+    {
+      id: "troo",
+      infinitive: "τρώω",
+      gloss: "yemek",
+      forms: [
+        { p: "εγώ", f: "τρώω" },
+        { p: "εσύ", f: "τρως" },
+        { p: "αυτός/ή/ό", f: "τρώει" },
+        { p: "εμείς", f: "τρώμε" },
+        { p: "εσείς", f: "τρώτε" },
+        { p: "αυτοί/ές/ά", f: "τρώνε" }
+      ]
     }
+  ],
+
+  gender: [
+    { noun: "άντρας", art: "ο", tr: "adam" },
+    { noun: "γυναίκα", art: "η", tr: "kadın" },
+    { noun: "παιδί", art: "το", tr: "çocuk" },
+    { noun: "σπίτι", art: "το", tr: "ev" },
+    { noun: "πόλη", art: "η", tr: "şehir" },
+    { noun: "καφές", art: "ο", tr: "kahve" },
+    { noun: "νερό", art: "το", tr: "su" },
+    { noun: "ημέρα", art: "η", tr: "gün" },
+    { noun: "χρόνος", art: "ο", tr: "zaman/yıl" },
+    { noun: "βιβλίο", art: "το", tr: "kitap" },
+    { noun: "δουλειά", art: "η", tr: "iş" },
+    { noun: "φίλος", art: "ο", tr: "arkadaş" },
+    { noun: "θάλασσα", art: "η", tr: "deniz" },
+    { noun: "αυτοκίνητο", art: "το", tr: "araba" },
+    { noun: "δρόμος", art: "ο", tr: "yol" },
+    { noun: "πρόβλημα", art: "το", tr: "sorun" }
+  ],
+
+  aspect: [
+    { tr: "Dün bir kitap okudum (tek olay).", aorist: "διάβασα", imperfect: "διάβαζα", answer: "aorist" },
+    { tr: "Çocukken çok kitap okurdum (alışkanlık).", aorist: "διάβασα", imperfect: "διάβαζα", answer: "imperfect" },
+    { tr: "Dün sinemaya gittim.", aorist: "πήγα", imperfect: "πήγαινα", answer: "aorist" },
+    { tr: "Her gün okula giderdim.", aorist: "πήγα", imperfect: "πήγαινα", answer: "imperfect" },
+    { tr: "Birden kapı çaldı / bir şey oldu (anı).", aorist: "έγινε", imperfect: "γινόταν", answer: "aorist" },
+    { tr: "O sırada yağmur yağıyordu (arka plan).", aorist: "έβρεξε", imperfect: "έβρεχε", answer: "imperfect" },
+    { tr: "Kahveyi içtim (bitirdim).", aorist: "ήπια", imperfect: "έπινα", answer: "aorist" },
+    { tr: "O yıllarda çok kahve içerdim.", aorist: "ήπια", imperfect: "έπινα", answer: "imperfect" }
+  ],
+
+  numbers: [
+    { n: 1, el: "ένα" },
+    { n: 2, el: "δύο" },
+    { n: 3, el: "τρία" },
+    { n: 4, el: "τέσσερα" },
+    { n: 5, el: "πέντε" },
+    { n: 6, el: "έξι" },
+    { n: 7, el: "επτά" },
+    { n: 8, el: "οκτώ" },
+    { n: 9, el: "εννέα" },
+    { n: 10, el: "δέκα" },
+    { n: 11, el: "έντεκα" },
+    { n: 12, el: "δώδεκα" },
+    { n: 15, el: "δεκαπέντε" },
+    { n: 20, el: "είκοσι" },
+    { n: 30, el: "τριάντα" },
+    { n: 40, el: "σαράντα" },
+    { n: 50, el: "πενήντα" },
+    { n: 100, el: "εκατό" }
+  ],
+
+  dictation: [
+    "Καλημέρα",
+    "Ευχαριστώ πολύ",
+    "Με λένε Νίκο",
+    "Θέλω έναν καφέ",
+    "Πού είναι το σπίτι",
+    "Σήμερα μαθαίνω ελληνικά",
+    "Χθες διάβασα ένα βιβλίο",
+    "Θα πάω αύριο",
+    "Δεν καταλαβαίνω",
+    "Μιλάω λίγα ελληνικά"
   ],
 
   extraVocab: {

@@ -994,6 +994,66 @@ select {
   margin-bottom: 16px;
 }
 
+.quick-train.multi {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 520px) {
+  .quick-train.multi {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 10px;
+  background: rgba(255, 253, 249, 0.12);
+  border-radius: 14px;
+  border: 1px solid rgba(243, 235, 224, 0.15);
+}
+
+.week-day {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  color: rgba(243, 235, 224, 0.55);
+  font-size: 0.72rem;
+}
+
+.week-day i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(243, 235, 224, 0.2);
+  display: block;
+}
+
+.week-day.on {
+  color: var(--sand);
+}
+
+.week-day.on i {
+  background: var(--sun);
+  box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.25);
+}
+
+.dict-form {
+  display: grid;
+  gap: 8px;
+}
+
+.dict-form input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  font-family: var(--font-greek);
+  font-size: 1.1rem;
+}
+
 .center-soft {
   text-align: center;
   margin: 0 0 10px !important;

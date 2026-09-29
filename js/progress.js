@@ -20,7 +20,7 @@ const Progress = (() => {
     drillStats: { clozeCorrect: 0, clozeTotal: 0, readingCorrect: 0, readingTotal: 0 },
     speakDone: {},
     studyLog: {},
-    trainerStats: { alpha: 0, verb: 0 }
+    trainerStats: { alpha: 0, verb: 0, gender: 0, aspect: 0, number: 0, dictation: 0 }
   });
 
   function load() {
@@ -197,12 +197,33 @@ const Progress = (() => {
 
   function bumpTrainer(kind) {
     const state = load();
-    state.trainerStats = state.trainerStats || { alpha: 0, verb: 0 };
-    if (kind === "alpha") state.trainerStats.alpha++;
-    if (kind === "verb") state.trainerStats.verb++;
+    state.trainerStats = state.trainerStats || {};
+    state.trainerStats[kind] = (state.trainerStats[kind] || 0) + 1;
     touchActivity(state);
     save(state);
     return state;
+  }
+
+  function weekActivity() {
+    const state = load();
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const mins = (state.studyLog || {})[key] || 0;
+      const active =
+        mins > 0 ||
+        Object.values(state.completed || {}).some((c) => (c.at || "").slice(0, 10) === key) ||
+        state.lastActiveDate === key;
+      days.push({
+        key,
+        label: ["Pz", "Pt", "Sa", "Ça", "Pe", "Cu", "Ct"][d.getDay()],
+        mins,
+        active: !!active
+      });
+    }
+    return days;
   }
 
   function exportData() {
@@ -354,6 +375,7 @@ const Progress = (() => {
     markSpeak,
     logStudyMinutes,
     bumpTrainer,
+    weekActivity,
     exportData,
     importData
   };
