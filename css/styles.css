@@ -1454,6 +1454,111 @@ select {
   content: "–";
 }
 
+/* Sade Bugün */
+.today-slim .hero-today {
+  margin-bottom: 12px;
+}
+
+.today-slim .hero-today h1 {
+  margin: 4px 0 12px;
+  font-size: clamp(1.6rem, 5vw, 2rem);
+}
+
+.phrase-slim {
+  background: rgba(255, 253, 249, 0.88);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.phrase-slim .greek-line {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+}
+
+.phrase-slim .meta {
+  margin: 0;
+}
+
+.today-actions {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+
+.today-actions .btn {
+  width: 100%;
+}
+
+.plan-fold {
+  background: rgba(255, 253, 249, 0.82);
+  border-radius: 14px;
+  padding: 4px 12px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.plan-fold summary {
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  padding: 12px 4px;
+  color: var(--bg1);
+  list-style: none;
+}
+
+.plan-fold summary::-webkit-details-marker {
+  display: none;
+}
+
+.plan-mode {
+  margin-bottom: 8px;
+}
+
+.plan-mode select {
+  width: 100%;
+}
+
+.launch-slim {
+  grid-template-columns: 1fr 1fr;
+}
+
+.launch-slim .btn:last-child {
+  grid-column: 1 / -1;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.settings-grid label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 420px) {
+  .today-actions {
+    grid-template-columns: 1fr;
+  }
+  .launch-slim {
+    grid-template-columns: 1fr;
+  }
+}
+
 .tabbar button {
   background: transparent;
   border: 0;
