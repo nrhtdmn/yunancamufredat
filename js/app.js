@@ -330,6 +330,12 @@ const App = (() => {
         <p class="eyebrow" style="color:var(--bg1)">Günün ipucu</p>
         <p>${escapeHtml(TRAINERS.tips[new Date().getDate() % TRAINERS.tips.length])}</p>
       </article>
+      <article class="tip-card phrase-card">
+        <p class="eyebrow" style="color:var(--bg1)">Günün kalıbı</p>
+        <p class="greek-line phrase-el">${escapeHtml(EXTRAS4.phrases[new Date().getDate() % EXTRAS4.phrases.length].el)}</p>
+        <p class="meta">${escapeHtml(EXTRAS4.phrases[new Date().getDate() % EXTRAS4.phrases.length].tr)}</p>
+        <button type="button" class="btn btn-ghost" id="say-phrase">♪ Dinle</button>
+      </article>
       ${
         next
           ? `<article class="focus-card">
@@ -432,6 +438,11 @@ const App = (() => {
       cardDeckId = deckId;
       startDeck(deckId);
       render();
+    });
+
+    section.querySelector("#say-phrase")?.addEventListener("click", () => {
+      const p = EXTRAS4.phrases[new Date().getDate() % EXTRAS4.phrases.length];
+      speakGreek(p.el);
     });
 
     const trio = section.querySelector("#trio-row");
@@ -670,7 +681,7 @@ const App = (() => {
     challengeQueue = [];
     challengeIndex = 0;
     if (mode === "challenge") {
-      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months", "genitive", "opposite", "ordinal", "direction", "adjective"];
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months", "genitive", "opposite", "ordinal", "direction", "adjective", "question", "connector", "frequency", "emotion"];
       challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
       trainerQ = challengeQueue[0];
       return;
@@ -705,10 +716,19 @@ const App = (() => {
       return;
     }
     if (mode === "flash5") {
-      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle", "opposite", "ordinal", "direction"];
+      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle", "opposite", "ordinal", "direction", "question", "connector", "emotion"];
       challengeQueue = shuffle(modes).slice(0, 5).map((m) => nextTrainerQuestion(m));
       challengeIndex = 0;
       trainerMode = "flash5";
+      trainerQ = challengeQueue[0];
+      trainerScore = { ok: 0, n: 0 };
+      return;
+    }
+    if (mode === "speed10") {
+      const modes = ["gender", "number", "aorist", "prep", "weekdays", "months", "opposite", "ordinal", "direction", "question", "connector", "frequency", "emotion", "body", "adjective", "polite"];
+      challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
+      challengeIndex = 0;
+      trainerMode = "speed10";
       trainerQ = challengeQueue[0];
       trainerScore = { ok: 0, n: 0 };
       return;
@@ -1141,6 +1161,92 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "synonym") {
+      const item = EXTRAS4.synonyms[Math.floor(Math.random() * EXTRAS4.synonyms.length)];
+      const askA = Math.random() < 0.5;
+      const prompt = askA ? item.a : item.b;
+      const answer = askA ? item.b : item.a;
+      const wrong = shuffle(EXTRAS4.synonyms.filter((x) => x.a !== item.a).map((x) => (askA ? x.b : x.a))).slice(0, 3);
+      return {
+        kind: "synonym",
+        prompt,
+        sub: `Eşanlamlı / yakın anlamlı? (${item.tr})`,
+        answer,
+        options: shuffle([answer, ...wrong]),
+        speak: answer.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "question") {
+      const item = EXTRAS4.questions[Math.floor(Math.random() * EXTRAS4.questions.length)];
+      const wrong = shuffle(EXTRAS4.questions.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "question",
+        prompt: item.tr,
+        sub: "Soru sözcüğü?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0].replace(";", ""),
+        input: false
+      };
+    }
+    if (mode === "connector") {
+      const item = EXTRAS4.connectors[Math.floor(Math.random() * EXTRAS4.connectors.length)];
+      const wrong = shuffle(EXTRAS4.connectors.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "connector",
+        prompt: item.tr,
+        sub: "Bağlaç / söylem bağı?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "frequency") {
+      const item = EXTRAS4.frequency[Math.floor(Math.random() * EXTRAS4.frequency.length)];
+      const wrong = shuffle(EXTRAS4.frequency.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "frequency",
+        prompt: item.tr,
+        sub: "Sıklık ifadesi?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "emotion") {
+      const item = EXTRAS4.emotions[Math.floor(Math.random() * EXTRAS4.emotions.length)];
+      const wrong = shuffle(EXTRAS4.emotions.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "emotion",
+        prompt: item.tr,
+        sub: "Duygu sıfatı?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "body") {
+      const item = EXTRAS4.body[Math.floor(Math.random() * EXTRAS4.body.length)];
+      const wrong = shuffle(EXTRAS4.body.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "body",
+        prompt: item.tr,
+        sub: "Vücut bölümü?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -1200,9 +1306,16 @@ const App = (() => {
     fixerror: "Yanlış düzelt",
     ordinal: "Sıra sayısı",
     direction: "Yön / konum",
+    synonym: "Eşanlamlı",
+    question: "Soru sözcüğü",
+    connector: "Bağlaç",
+    frequency: "Sıklık",
+    emotion: "Duygu",
+    body: "Vücut",
     scramble: "Cümle kur",
     exam: "Mini sınav",
     flash5: "Hızlı 5",
+    speed10: "Hızlı 10",
     match: "Eşleştir",
     review: "Yanlış tekrarı",
     dialogue: "Diyalog",
@@ -1379,7 +1492,29 @@ const App = (() => {
       return w;
     }
 
-    if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode === "challenge" || trainerMode === "exam" || trainerMode === "flash5" ? "verb" : trainerMode);
+    if (trainerMode === "speed10" && challengeIndex >= challengeQueue.length) {
+      Progress.bumpTrainer("speed10");
+      const pct = Math.round((trainerScore.ok / Math.max(1, trainerScore.n)) * 100);
+      const w = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card">
+        <p class="brand-mark">Hızlı 10</p>
+        <h1>${trainerScore.ok}/10 · %${pct}</h1>
+        <p class="lede">${pct >= 80 ? "Sprint iyi." : "Yanlış tekrarını aç."}</p>
+        <button class="btn btn-primary" id="again">Tekrar sprint</button>
+        <button class="btn btn-ghost" id="train-exit">Çık</button>
+      </div></div>`);
+      w.querySelector("#again").onclick = () => {
+        startTrainer("speed10");
+        render();
+      };
+      w.querySelector("#train-exit").onclick = () => {
+        trainerMode = null;
+        view = "today";
+        render();
+      };
+      return w;
+    }
+
+    if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode === "challenge" || trainerMode === "exam" || trainerMode === "flash5" || trainerMode === "speed10" ? "verb" : trainerMode);
     const title =
       trainerMode === "challenge"
         ? `Challenge ${challengeIndex + 1}/10`
@@ -1387,6 +1522,8 @@ const App = (() => {
           ? `Sınav ${challengeIndex + 1}/20`
           : trainerMode === "flash5"
             ? `Hızlı ${challengeIndex + 1}/5`
+            : trainerMode === "speed10"
+              ? `Sprint ${challengeIndex + 1}/10`
             : TRAINER_TITLES[trainerMode] || "Antrenman";
     const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
       <p class="eyebrow">${escapeHtml(title)} · ${trainerScore.ok}/${trainerScore.n}</p>
@@ -1408,7 +1545,7 @@ const App = (() => {
     const finish = (ok, msg) => {
       trainerScore.n++;
       if (ok) trainerScore.ok++;
-      if (trainerMode === "challenge" || trainerMode === "exam" || trainerMode === "flash5") Progress.bumpTrainer(trainerQ.kind || trainerMode);
+      if (trainerMode === "challenge" || trainerMode === "exam" || trainerMode === "flash5" || trainerMode === "speed10") Progress.bumpTrainer(trainerQ.kind || trainerMode);
       else Progress.bumpTrainer(trainerMode);
       if (!ok) {
         Progress.pushWrong({
@@ -1477,7 +1614,7 @@ const App = (() => {
 
     wrap.querySelector("#next")?.addEventListener("click", () => {
       trainerFeedback = null;
-      if (trainerMode === "challenge" || trainerMode === "exam" || trainerMode === "flash5") {
+      if (trainerMode === "challenge" || trainerMode === "exam" || trainerMode === "flash5" || trainerMode === "speed10") {
         challengeIndex++;
         trainerQ = challengeQueue[challengeIndex] || null;
       } else if (trainerMode === "review") {
@@ -1664,13 +1801,14 @@ const App = (() => {
       <div class="launch-stack">
         <button type="button" class="btn btn-primary challenge-btn" data-train="challenge">Günlük challenge (10)</button>
         <button type="button" class="btn btn-primary challenge-btn" data-train="flash5">Hızlı 5</button>
+        <button type="button" class="btn btn-primary challenge-btn" data-train="speed10">Hızlı 10</button>
         <button type="button" class="btn btn-primary challenge-btn" data-train="exam">Mini sınav (20)</button>
         <button type="button" class="btn btn-ghost sand-btn challenge-btn" data-train="review">Yanlış tekrarı (${wrongN})</button>
       </div>
       <details class="train-cat" open>
         <summary>Temel</summary>
         <div class="quick-train multi">
-          ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("ordinal", "Sıra")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("match", "Eşleştir")}
+          ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("ordinal", "Sıra")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("question", "Soru")}${btn("match", "Eşleştir")}
         </div>
       </details>
       <details class="train-cat">
@@ -1682,13 +1820,13 @@ const App = (() => {
       <details class="train-cat">
         <summary>Yapı & üslup</summary>
         <div class="quick-train multi">
-          ${btn("pronoun", "Zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("opposite", "Zıt")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
+          ${btn("pronoun", "Zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("opposite", "Zıt")}${btn("synonym", "Eşanlam")}${btn("connector", "Bağlaç")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
         </div>
       </details>
       <details class="train-cat">
         <summary>Gündelik</summary>
         <div class="quick-train multi">
-          ${btn("direction", "Yön")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle kur")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
+          ${btn("direction", "Yön")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle kur")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
           <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
           <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
         </div>
@@ -1737,7 +1875,13 @@ const App = (() => {
                                 ? "Renkler"
                                 : id === "shopping"
                                   ? "Alışveriş"
-                                  : id.toUpperCase();
+                                  : id === "city"
+                                    ? "Şehir"
+                                    : id === "school"
+                                      ? "Okul"
+                                      : id === "tech"
+                                        ? "Teknoloji"
+                                        : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);
