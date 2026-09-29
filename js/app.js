@@ -705,7 +705,7 @@ const App = (() => {
       return;
     }
     if (mode === "flash5") {
-      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle"];
+      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle", "opposite", "ordinal", "direction"];
       challengeQueue = shuffle(modes).slice(0, 5).map((m) => nextTrainerQuestion(m));
       challengeIndex = 0;
       trainerMode = "flash5";
@@ -1084,6 +1084,63 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "opposite") {
+      const item = EXTRAS3.opposites[Math.floor(Math.random() * EXTRAS3.opposites.length)];
+      const askA = Math.random() < 0.5;
+      const prompt = askA ? item.a : item.b;
+      const answer = askA ? item.b : item.a;
+      const wrong = shuffle(EXTRAS3.opposites.filter((x) => x.a !== item.a).map((x) => (askA ? x.b : x.a))).slice(0, 3);
+      return {
+        kind: "opposite",
+        prompt,
+        sub: `Zıt anlamlısı? (${item.tr})`,
+        answer,
+        options: shuffle([answer, ...wrong]),
+        speak: answer,
+        input: false
+      };
+    }
+    if (mode === "fixerror") {
+      const item = EXTRAS3.fixError[Math.floor(Math.random() * EXTRAS3.fixError.length)];
+      const wrong = shuffle(EXTRAS3.fixError.filter((x) => x.good !== item.good)).slice(0, 3).map((x) => x.good);
+      return {
+        kind: "fixerror",
+        prompt: item.bad,
+        sub: "Doğru hali hangisi?",
+        answer: item.good,
+        options: shuffle([item.good, ...wrong]),
+        hint: item.why,
+        speak: item.good,
+        input: false
+      };
+    }
+    if (mode === "ordinal") {
+      const item = EXTRAS3.ordinals[Math.floor(Math.random() * EXTRAS3.ordinals.length)];
+      const wrong = shuffle(EXTRAS3.ordinals.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "ordinal",
+        prompt: `${item.n} (${item.tr})`,
+        sub: "Sıra sayısı Yunancası?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "direction") {
+      const item = EXTRAS3.directions[Math.floor(Math.random() * EXTRAS3.directions.length)];
+      const wrong = shuffle(EXTRAS3.directions.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "direction",
+        prompt: item.tr,
+        sub: "Yön / konum ifadesi?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -1139,6 +1196,10 @@ const App = (() => {
     polite: "Nazik üslup",
     adjective: "Sıfat uyumu",
     bignum: "Büyük sayı",
+    opposite: "Zıt anlamlı",
+    fixerror: "Yanlış düzelt",
+    ordinal: "Sıra sayısı",
+    direction: "Yön / konum",
     scramble: "Cümle kur",
     exam: "Mini sınav",
     flash5: "Hızlı 5",
@@ -1347,7 +1408,7 @@ const App = (() => {
     const finish = (ok, msg) => {
       trainerScore.n++;
       if (ok) trainerScore.ok++;
-      if (trainerMode === "challenge" || trainerMode === "exam") Progress.bumpTrainer(trainerQ.kind || trainerMode);
+      if (trainerMode === "challenge" || trainerMode === "exam" || trainerMode === "flash5") Progress.bumpTrainer(trainerQ.kind || trainerMode);
       else Progress.bumpTrainer(trainerMode);
       if (!ok) {
         Progress.pushWrong({
@@ -1609,7 +1670,7 @@ const App = (() => {
       <details class="train-cat" open>
         <summary>Temel</summary>
         <div class="quick-train multi">
-          ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("match", "Eşleştir")}
+          ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("ordinal", "Sıra")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("match", "Eşleştir")}
         </div>
       </details>
       <details class="train-cat">
@@ -1621,13 +1682,13 @@ const App = (() => {
       <details class="train-cat">
         <summary>Yapı & üslup</summary>
         <div class="quick-train multi">
-          ${btn("pronoun", "Zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
+          ${btn("pronoun", "Zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("opposite", "Zıt")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
         </div>
       </details>
       <details class="train-cat">
-        <summary>Üretim & sınav</summary>
+        <summary>Gündelik</summary>
         <div class="quick-train multi">
-          ${btn("scramble", "Cümle kur")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
+          ${btn("direction", "Yön")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle kur")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
           <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
           <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
         </div>
@@ -1670,7 +1731,13 @@ const App = (() => {
                           ? "İş"
                           : id === "home"
                             ? "Ev"
-                            : id.toUpperCase();
+                            : id === "family"
+                              ? "Aile"
+                              : id === "colors"
+                                ? "Renkler"
+                                : id === "shopping"
+                                  ? "Alışveriş"
+                                  : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);
