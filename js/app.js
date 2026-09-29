@@ -22,6 +22,10 @@ const App = (() => {
   let challengeIndex = 0;
   let focusTimer = null;
   let focusLeft = 0;
+  let matchPairs = [];
+  let matchSelected = null;
+  let matchLocked = false;
+  let ttsRate = 0.9;
 
   function attachGreekKeyboard(form, inputName) {
     const input = form.querySelector(`[name="${inputName}"]`);
@@ -58,7 +62,7 @@ const App = (() => {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "el-GR";
-    u.rate = 0.9;
+    u.rate = ttsRate || 0.9;
     const voices = window.speechSynthesis.getVoices();
     const elVoice = voices.find((v) => (v.lang || "").toLowerCase().startsWith("el"));
     if (elVoice) u.voice = elVoice;
@@ -373,6 +377,17 @@ const App = (() => {
         </div>
         <button type="button" class="btn btn-ghost" id="focus-btn">${focusLeft > 0 ? "Durdur" : "Başlat"}</button>
       </article>
+      <article class="mini-action">
+        <div>
+          <strong>Ses hızı</strong>
+          <p>TTS okuma hızı</p>
+        </div>
+        <select id="tts-rate" class="goal-select">
+          <option value="0.75" ${ttsRate === 0.75 ? "selected" : ""}>Yavaş</option>
+          <option value="0.9" ${ttsRate === 0.9 ? "selected" : ""}>Normal</option>
+          <option value="1.05" ${ttsRate === 1.05 ? "selected" : ""}>Hızlı</option>
+        </select>
+      </article>
       ${trainerButtons(ts)}
       <div class="section-head">
         <h3>Bugünkü plan</h3>
@@ -467,6 +482,10 @@ const App = (() => {
         }
       }, 1000);
       render();
+    });
+
+    section.querySelector("#tts-rate")?.addEventListener("change", (e) => {
+      ttsRate = Number(e.target.value) || 0.9;
     });
 
     section.querySelectorAll("[data-train]").forEach((btn) => {
@@ -647,7 +666,7 @@ const App = (() => {
     challengeQueue = [];
     challengeIndex = 0;
     if (mode === "challenge") {
-      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months"];
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months", "genitive"];
       challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
       trainerQ = challengeQueue[0];
       return;
@@ -657,6 +676,11 @@ const App = (() => {
       return;
     }
     if (mode === "dialogue" || mode === "listen") {
+      trainerQ = null;
+      return;
+    }
+    if (mode === "match") {
+      startMatch();
       trainerQ = null;
       return;
     }
@@ -933,6 +957,20 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "genitive") {
+      const item = TRAINERS.genitive[Math.floor(Math.random() * TRAINERS.genitive.length)];
+      const wrong = shuffle(TRAINERS.genitive.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "genitive",
+        prompt: item.tr,
+        sub: "Genitif sahiplik?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -982,6 +1020,8 @@ const App = (() => {
     imperative: "Emir kipi",
     perfect: "Perfect",
     months: "Ay / mevsim",
+    genitive: "Genitif",
+    match: "Eşleştir",
     review: "Yanlış tekrarı",
     dialogue: "Diyalog",
     listen: "Dinle-anla",
@@ -989,10 +1029,96 @@ const App = (() => {
     challenge: "Günlük challenge"
   };
 
+  function startMatch() {
+    const state = Progress.load();
+    const deckId = CONTENT.decks[state.currentLevelId] ? state.currentLevelId : "a1";
+    const pool = shuffle(CONTENT.decks[deckId] || CONTENT.decks.a1).slice(0, 4);
+    matchPairs = [];
+    pool.forEach((c, i) => {
+      matchPairs.push({ id: "el" + i, pair: i, text: c.el, side: "el", done: false });
+      matchPairs.push({ id: "tr" + i, pair: i, text: c.tr, side: "tr", done: false });
+    });
+    matchPairs = shuffle(matchPairs);
+    matchSelected = null;
+    matchLocked = false;
+    trainerScore = { ok: 0, n: 0 };
+  }
+
+  function renderMatch() {
+    const left = matchPairs.filter((p) => !p.done).length;
+    if (!left) {
+      Progress.bumpTrainer("match");
+      const w = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card">
+        <p class="brand-mark">Eşleştirme</p>
+        <h1>Tur bitti</h1>
+        <button class="btn btn-primary" id="again">Tekrar</button>
+        <button class="btn btn-ghost" id="train-exit">Çık</button>
+      </div></div>`);
+      w.querySelector("#again").onclick = () => {
+        startMatch();
+        render();
+      };
+      w.querySelector("#train-exit").onclick = () => {
+        trainerMode = null;
+        view = "today";
+        render();
+      };
+      return w;
+    }
+    const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card wide-card">
+      <p class="eyebrow">Eşleştir · EL ↔ TR</p>
+      <div class="match-grid" id="match-grid"></div>
+      <button class="btn btn-ghost" id="train-exit" style="width:100%;margin-top:10px">Çık</button>
+    </div></div>`);
+    const grid = wrap.querySelector("#match-grid");
+    matchPairs.forEach((tile) => {
+      const b = el(`<button type="button" class="match-tile ${tile.done ? "done" : ""} ${matchSelected && matchSelected.id === tile.id ? "sel" : ""} ${tile.side}">${escapeHtml(tile.text)}</button>`);
+      if (!tile.done) {
+        b.addEventListener("click", () => {
+          if (matchLocked) return;
+          if (!matchSelected) {
+            matchSelected = tile;
+            render();
+            return;
+          }
+          if (matchSelected.id === tile.id) {
+            matchSelected = null;
+            render();
+            return;
+          }
+          if (matchSelected.pair === tile.pair && matchSelected.side !== tile.side) {
+            matchSelected.done = true;
+            tile.done = true;
+            const elTile = matchPairs.find((p) => p.pair === tile.pair && p.side === "el");
+            if (elTile) speakGreek(elTile.text);
+            matchSelected = null;
+            matchLocked = false;
+            render();
+          } else {
+            matchLocked = true;
+            setTimeout(() => {
+              matchSelected = null;
+              matchLocked = false;
+              render();
+            }, 450);
+          }
+        });
+      }
+      grid.appendChild(b);
+    });
+    wrap.querySelector("#train-exit").addEventListener("click", () => {
+      trainerMode = null;
+      view = "today";
+      render();
+    });
+    return wrap;
+  }
+
   function renderTrainer() {
     if (trainerMode === "write") return renderWritingStudio();
     if (trainerMode === "dialogue") return renderDialogueStudio();
     if (trainerMode === "listen") return renderListenQuiz();
+    if (trainerMode === "match") return renderMatch();
     if (trainerQ && trainerQ.empty) {
       const w = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card">
         <p class="brand-mark">Yanlış tekrarı</p>
@@ -1283,6 +1409,8 @@ const App = (() => {
         <button type="button" class="btn btn-ghost sand-btn" data-train="conditional">αν (${ts.conditional || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="number">Sayı (${ts.number || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="months">Ay (${ts.months || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="genitive">Genitif (${ts.genitive || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="match">Eşleştir (${ts.match || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="time">Saat (${ts.time || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="dictation">Dikte (${ts.dictation || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="listen">Dinle (${ts.listen || 0})</button>
@@ -1320,7 +1448,11 @@ const App = (() => {
                   ? "Sınav"
                   : id === "friends"
                     ? "False friends"
-                    : id.toUpperCase();
+                    : id === "weather"
+                      ? "Hava"
+                      : id === "health"
+                        ? "Sağlık"
+                        : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);
@@ -1671,6 +1803,10 @@ const App = (() => {
       }
       <button class="btn btn-ghost sand-btn" id="rerun-diag">Teşhis sınavını yeniden çalıştır</button>
       <article class="info-panel journal-panel">
+        <h3>30 gün aktivite</h3>
+        <div class="heat-grid" id="heat-grid"></div>
+      </article>
+      <article class="info-panel journal-panel">
         <h3>Rozetler</h3>
         <ul class="badge-grid" id="badge-grid"></ul>
       </article>
@@ -1706,6 +1842,10 @@ const App = (() => {
 
     const jlist = section.querySelector("#journal-list");
     const badgeGrid = section.querySelector("#badge-grid");
+    const heat = section.querySelector("#heat-grid");
+    Progress.monthActivity().forEach((d) => {
+      heat.appendChild(el(`<i class="heat h${d.heat}" title="${d.key}${d.mins ? " · " + d.mins + " dk" : ""}"></i>`));
+    });
     Progress.refreshBadges();
     const unlocked = Progress.load().unlockedBadges || {};
     (TRAINERS.badges || []).forEach((b) => {

@@ -270,6 +270,23 @@ const Progress = (() => {
     return days;
   }
 
+  function monthActivity() {
+    const state = load();
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const mins = (state.studyLog || {})[key] || 0;
+      let heat = 0;
+      if (mins >= 60) heat = 3;
+      else if (mins >= 30) heat = 2;
+      else if (mins > 0 || state.lastActiveDate === key) heat = 1;
+      days.push({ key, mins, heat });
+    }
+    return days;
+  }
+
   function winChallenge() {
     const state = load();
     state.challengesWon = (state.challengesWon || 0) + 1;
@@ -458,6 +475,7 @@ const Progress = (() => {
     popWrong,
     clearWrongs,
     weekActivity,
+    monthActivity,
     winChallenge,
     markWrite,
     refreshBadges,

@@ -314,6 +314,17 @@ const TRAINERS = {
     { tr: "kış", el: "χειμώνας" }
   ],
 
+  genitive: [
+    { tr: "evin kapısı", el: "η πόρτα του σπιτιού", tip: "genitif sahiplik" },
+    { tr: "çocuğun kitabı", el: "το βιβλίο του παιδιού", tip: "" },
+    { tr: "Maria'nın arabası", el: "το αυτοκίνητο της Μαρίας", tip: "" },
+    { tr: "öğretmenin evi", el: "το σπίτι του δασκάλου", tip: "" },
+    { tr: "ülkenin başkenti", el: "η πρωτεύουσα της χώρας", tip: "" },
+    { tr: "sorunun çözümü", el: "η λύση του προβλήματος", tip: "" },
+    { tr: "günün sonu", el: "το τέλος της ημέρας", tip: "" },
+    { tr: "sınavın sonucu", el: "το αποτέλεσμα της εξέτασης", tip: "" }
+  ],
+
   badges: [
     { id: "first_task", title: "İlk adım", desc: "İlk görevi tamamla", check: (s) => Object.keys(s.completed || {}).length >= 1 },
     { id: "streak3", title: "3 gün seri", desc: "3 gün üst üste aktif ol", check: (s) => (s.streak || 0) >= 3 },
@@ -376,6 +387,26 @@ const TRAINERS = {
       { el: "τίποτα", tr: "hiçbir şey", tip: "" },
       { el: "απλά", tr: "sadece / basitçe", tip: "" },
       { el: "τέλος", tr: "son", tip: "telos" }
+    ],
+    weather: [
+      { el: "βροχή", tr: "yağmur", tip: "η βροχή" },
+      { el: "ήλιος", tr: "güneş", tip: "" },
+      { el: "σύννεφο", tr: "bulut", tip: "" },
+      { el: "άνεμος", tr: "rüzgâr", tip: "" },
+      { el: "χιόνι", tr: "kar", tip: "" },
+      { el: "ζέστη", tr: "sıcaklık / sıcak", tip: "" },
+      { el: "κρύο", tr: "soğuk", tip: "" },
+      { el: "καταιγίδα", tr: "fırtına", tip: "" }
+    ],
+    health: [
+      { el: "πονοκέφαλος", tr: "baş ağrısı", tip: "" },
+      { el: "πυρετός", tr: "ateş", tip: "" },
+      { el: "βήχας", tr: "öksürük", tip: "" },
+      { el: "γιατρός", tr: "doktor", tip: "" },
+      { el: "φάρμακο", tr: "ilaç", tip: "" },
+      { el: "νοσοκομείο", tr: "hastane", tip: "" },
+      { el: "υγεία", tr: "sağlık", tip: "" },
+      { el: "πόνος", tr: "ağrı", tip: "" }
     ]
   },
 
