@@ -1506,6 +1506,76 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "superlative") {
+      const item = EXTRAS8.superlative[Math.floor(Math.random() * EXTRAS8.superlative.length)];
+      const wrong = shuffle(EXTRAS8.superlative.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "superlative",
+        prompt: item.tr,
+        sub: "Üstünlük (en…)?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "posimp") {
+      const item = EXTRAS8.posImperative[Math.floor(Math.random() * EXTRAS8.posImperative.length)];
+      const wrong = shuffle(EXTRAS8.posImperative.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "posimp",
+        prompt: item.tr,
+        sub: "Olumlu emir?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "familytalk") {
+      const item = EXTRAS8.familyTalk[Math.floor(Math.random() * EXTRAS8.familyTalk.length)];
+      const wrong = shuffle(EXTRAS8.familyTalk.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "familytalk",
+        prompt: item.tr,
+        sub: "Aile sohbeti?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "healthtalk") {
+      const item = EXTRAS8.healthTalk[Math.floor(Math.random() * EXTRAS8.healthTalk.length)];
+      const wrong = shuffle(EXTRAS8.healthTalk.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "healthtalk",
+        prompt: item.tr,
+        sub: "Sağlık ifadesi?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "pasttime") {
+      const item = EXTRAS8.pastTime[Math.floor(Math.random() * EXTRAS8.pastTime.length)];
+      const wrong = shuffle(EXTRAS8.pastTime.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "pasttime",
+        prompt: item.tr,
+        sub: "Geçmiş zaman zarfı?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -1587,6 +1657,11 @@ const App = (() => {
     office: "Ofis",
     writeframe: "Yazma kalıbı",
     howmuch: "Πόσο…",
+    superlative: "Üstünlük",
+    posimp: "Olumlu emir",
+    familytalk: "Aile sohbeti",
+    healthtalk: "Sağlık",
+    pasttime: "Geçmiş zarf",
     scramble: "Cümle kur",
     exam: "Mini sınav",
     flash5: "Hızlı 5",
@@ -2084,9 +2159,9 @@ const App = (() => {
         <summary>Tüm antrenmanlar</summary>
         <div class="quick-train multi">
           ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("ordinal", "Sıra")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("question", "Soru")}${btn("match", "Eşleştir")}
-          ${btn("verb", "Fiil")}${btn("aspect", "Aspect")}${btn("aorist", "Aorist")}${btn("perfect", "Perfect")}${btn("imperative", "Emir")}${btn("negimp", "Μην")}${btn("subjunctive", "να")}${btn("particle", "θα/να")}${btn("reflexive", "Dönüşlü")}
-          ${btn("pronoun", "Zamir")}${btn("dblpron", "Çift zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("case", "Durum")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("opposite", "Zıt")}${btn("synonym", "Eşanlam")}${btn("connector", "Bağlaç")}${btn("relative", "που")}${btn("plural", "Çoğul")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
-          ${btn("direction", "Yön")}${btn("timeadv", "Zaman")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("weather", "Hava")}${btn("measure", "Ölçü")}${btn("howmuch", "Πόσο")}${btn("transport", "Ulaşım")}${btn("jobs", "Meslek")}${btn("phone", "Telefon")}${btn("office", "Ofis")}${btn("restaurant", "Restoran")}${btn("writeframe", "Yazı kalıbı")}${btn("falsefriend", "False friend")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
+          ${btn("verb", "Fiil")}${btn("aspect", "Aspect")}${btn("aorist", "Aorist")}${btn("perfect", "Perfect")}${btn("imperative", "Emir")}${btn("posimp", "Έλα")}${btn("negimp", "Μην")}${btn("subjunctive", "να")}${btn("particle", "θα/να")}${btn("reflexive", "Dönüşlü")}
+          ${btn("pronoun", "Zamir")}${btn("dblpron", "Çift zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("case", "Durum")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("superlative", "En…")}${btn("opposite", "Zıt")}${btn("synonym", "Eşanlam")}${btn("connector", "Bağlaç")}${btn("relative", "που")}${btn("plural", "Çoğul")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
+          ${btn("direction", "Yön")}${btn("timeadv", "Zaman")}${btn("pasttime", "Geçmiş")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("weather", "Hava")}${btn("measure", "Ölçü")}${btn("howmuch", "Πόσο")}${btn("transport", "Ulaşım")}${btn("jobs", "Meslek")}${btn("phone", "Telefon")}${btn("office", "Ofis")}${btn("familytalk", "Aile")}${btn("healthtalk", "Sağlık")}${btn("restaurant", "Restoran")}${btn("writeframe", "Yazı kalıbı")}${btn("falsefriend", "False friend")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
           <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
           <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
         </div>
@@ -2159,7 +2234,13 @@ const App = (() => {
                                                         ? "Seyahat+"
                                                         : id === "feelings2"
                                                           ? "Duygular+"
-                                                          : id.toUpperCase();
+                                                          : id === "school2"
+                                                            ? "Okul+"
+                                                            : id === "bank"
+                                                              ? "Banka"
+                                                              : id === "internet"
+                                                                ? "İnternet"
+                                                                : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);
