@@ -670,7 +670,7 @@ const App = (() => {
     challengeQueue = [];
     challengeIndex = 0;
     if (mode === "challenge") {
-      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months", "genitive"];
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months", "genitive", "opposite", "ordinal", "direction", "adjective"];
       challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
       trainerQ = challengeQueue[0];
       return;
@@ -1390,7 +1390,7 @@ const App = (() => {
             : TRAINER_TITLES[trainerMode] || "Antrenman";
     const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
       <p class="eyebrow">${escapeHtml(title)} · ${trainerScore.ok}/${trainerScore.n}</p>
-      <h1 class="diag-q ${trainerQ.kind === "number" || trainerQ.kind === "aspect" || trainerQ.kind === "translate" || trainerQ.kind === "time" || trainerQ.kind === "exam" || trainerQ.kind === "scramble" ? "" : "greek-line"}">${escapeHtml(trainerQ.prompt)}</h1>
+      <h1 class="diag-q ${trainerQ.kind === "number" || trainerQ.kind === "aspect" || trainerQ.kind === "translate" || trainerQ.kind === "time" || trainerQ.kind === "exam" || trainerQ.kind === "scramble" || trainerQ.kind === "ordinal" ? "" : "greek-line"}">${escapeHtml(trainerQ.prompt)}</h1>
       <p class="lede center-soft">${escapeHtml(trainerQ.sub)}</p>
       ${trainerQ.hint && trainerFeedback ? `<p class="meta center-soft">${escapeHtml(trainerQ.hint)}</p>` : ""}
       ${trainerQ.scramble ? `<p class="scramble-built greek-line" id="built">${escapeHtml((trainerQ.built || []).join(" ") || "…")}</p>` : ""}
