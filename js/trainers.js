@@ -243,6 +243,34 @@ const TRAINERS = {
     { tr: "Yunanca öğreniyorum", el: "Μαθαίνω ελληνικά" }
   ],
 
+  prep: [
+    { tr: "Atina'da yaşıyorum", gap: "___ στην Αθήνα", options: ["Μένω", "Πάω", "Τρώω", "Βλέπω"], a: 0, tip: "μένω + σε" },
+    { tr: "Masadan / masanın üstünden", gap: "Το βιβλίο είναι ___ το τραπέζι", options: ["πάνω στο", "κάτω από", "δίπλα σε", "μέσα σε"], a: 0, tip: "πάνω σε = üzerinde" },
+    { tr: "Arkadaşımla", gap: "Πάω ___ τον φίλο μου", options: ["με", "από", "σε", "για"], a: 0, tip: "με = ile" },
+    { tr: "İşim için", gap: "Διαβάζω ___ τις εξετάσεις", options: ["για", "με", "από", "χωρίς"], a: 0, tip: "για = için" },
+    { tr: "Okuldan geliyorum", gap: "Έρχομαι ___ το σχολείο", options: ["από", "σε", "με", "για"], a: 0, tip: "από = -den/-dan" },
+    { tr: "Evde", gap: "Είμαι ___ σπίτι", options: ["στο", "στον", "στην", "στα"], a: 0, tip: "στο σπίτι" },
+    { tr: "Yanında", gap: "Κάθομαι ___ σου", options: ["δίπλα", "πάνω", "κάτω", "μέσα"], a: 0, tip: "δίπλα σε" },
+    { tr: "Olmadan", gap: "Δεν μπορώ ___ εσένα", options: ["χωρίς", "με", "για", "προς"], a: 0, tip: "χωρίς = olmadan" }
+  ],
+
+  conditional: [
+    { tr: "Yağmur yağarsa gelmem.", el: "Αν βρέχει, δεν θα έρθω", tip: "Tip 1 gerçek" },
+    { tr: "Zamanım olsaydı gelirdim.", el: "Αν είχα χρόνο, θα ερχόμουν", tip: "Tip 2 hayali" },
+    { tr: "İstersen yardım ederim.", el: "Αν θέλεις, θα βοηθήσω", tip: "Tip 1" },
+    { tr: "Param olsaydı seyahat ederdim.", el: "Αν είχα χρήματα, θα ταξίδευα", tip: "Tip 2" },
+    { tr: "Erken kalkarsan yetişirsin.", el: "Αν σηκωθείς νωρίς, θα προλάβεις", tip: "Tip 1" },
+    { tr: "Bilsem söylerdim.", el: "Αν ήξερα, θα το έλεγα", tip: "Tip 2" }
+  ],
+
+  writing: [
+    { id: "w1", title: "Günlük", prompt: "Bugünü 80–120 kelime Yunanca anlat (şimdiki + geçmiş karışık).", minutes: 12, checklist: ["En az 8 cümle", "1 aorist", "1 bağlaç (και/αλλά/γιατί)"] },
+    { id: "w2", title: "E-posta", prompt: "Arkadaşa Yunanca kısa e-posta: buluşma teklif et.", minutes: 10, checklist: ["Selam + kapanış", "Θα ήθελα / Μπορούμε", "Yer + saat"] },
+    { id: "w3", title: "Görüş", prompt: "«Sosyal medya faydalı mı?» sorusuna 150 kelime yanıt yaz.", minutes: 15, checklist: ["Giriş cümlesi", "2 gerekçe", "Sonuç"] },
+    { id: "w4", title: "Hikâye", prompt: "Dün başından geçen kısa bir olayı aorist ile anlat.", minutes: 12, checklist: ["5+ aorist", "Kim/nerede/ne oldu", "Sonuç"] },
+    { id: "w5", title: "YDS üslup", prompt: "Eğitim üzerine 180 kelimelik nötr-akademik paragraf yaz.", minutes: 18, checklist: ["εντούτοις/ωστόσο", "1 örnek", "Net sonuç cümlesi"] }
+  ],
+
   badges: [
     { id: "first_task", title: "İlk adım", desc: "İlk görevi tamamla", check: (s) => Object.keys(s.completed || {}).length >= 1 },
     { id: "streak3", title: "3 gün seri", desc: "3 gün üst üste aktif ol", check: (s) => (s.streak || 0) >= 3 },
@@ -258,8 +286,43 @@ const TRAINERS = {
       return t && d / t >= 0.5;
     }},
     { id: "trainer20", title: "Antrenör", desc: "20 antrenman turu", check: (s) => Object.values(s.trainerStats || {}).reduce((a, b) => a + b, 0) >= 20 },
-    { id: "challenge", title: "Günlük savaşçı", desc: "Bir challenge bitir", check: (s) => (s.challengesWon || 0) >= 1 }
+    { id: "challenge", title: "Günlük savaşçı", desc: "Bir challenge bitir", check: (s) => (s.challengesWon || 0) >= 1 },
+    { id: "write3", title: "Yazar", desc: "3 yazma promptu bitir", check: (s) => Object.keys(s.writeDone || {}).length >= 3 },
+    { id: "prep15", title: "Edat ustası", desc: "15 edat turu", check: (s) => ((s.trainerStats || {}).prep || 0) >= 15 }
   ],
+
+  themeDecks: {
+    food: [
+      { el: "φαγητό", tr: "yemek", tip: "το φαγητό" },
+      { el: "εστιατόριο", tr: "restoran", tip: "" },
+      { el: "λογαριασμός", tr: "hesap", tip: "τον λογαριασμό" },
+      { el: "πικάντικο", tr: "acı", tip: "" },
+      { el: "χορτοφαγικό", tr: "vejetaryen", tip: "" },
+      { el: "επιδόρπιο", tr: "tatlı", tip: "" },
+      { el: "κρασί", tr: "şarap", tip: "το κρασί" },
+      { el: "τυρί", tr: "peynir", tip: "το τυρί" }
+    ],
+    travel: [
+      { el: "αεροδρόμιο", tr: "havaalanı", tip: "" },
+      { el: "εισιτήριο", tr: "bilet", tip: "" },
+      { el: "βαλίτσα", tr: "bavul", tip: "" },
+      { el: "ξενοδοχείο", tr: "otel", tip: "" },
+      { el: "χάρτης", tr: "harita", tip: "" },
+      { el: "σύνορο", tr: "sınır", tip: "" },
+      { el: "καθυστέρηση", tr: "gecikme", tip: "" },
+      { el: "κράτηση", tr: "rezervasyon", tip: "" }
+    ],
+    exam: [
+      { el: "εξέταση", tr: "sınav", tip: "" },
+      { el: "βαθμολογία", tr: "not / puan", tip: "" },
+      { el: "εκφώνηση", tr: "soru kökü / yönerge", tip: "" },
+      { el: "κενό", tr: "boşluk", tip: "cloza" },
+      { el: "επιλογή", tr: "seçenek", tip: "" },
+      { el: "χρονόμετρο", tr: "kronometre", tip: "" },
+      { el: "επανάληψη", tr: "tekrar", tip: "" },
+      { el: "στρατηγική", tr: "strateji", tip: "" }
+    ]
+  },
 
   extraVocab: {
     a0: [
@@ -314,5 +377,8 @@ const TRAINERS = {
   if (typeof CONTENT === "undefined") return;
   Object.keys(TRAINERS.extraVocab).forEach((deck) => {
     CONTENT.decks[deck] = (CONTENT.decks[deck] || []).concat(TRAINERS.extraVocab[deck]);
+  });
+  Object.keys(TRAINERS.themeDecks || {}).forEach((deck) => {
+    CONTENT.decks[deck] = TRAINERS.themeDecks[deck];
   });
 })();

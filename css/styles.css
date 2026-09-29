@@ -1114,6 +1114,75 @@ select {
   color: var(--ink-soft);
 }
 
+.road-search {
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(243, 235, 224, 0.25);
+  background: rgba(255, 253, 249, 0.92);
+  color: var(--ink);
+}
+
+.search-hits {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.search-hits button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 253, 249, 0.9);
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+}
+
+.search-hits span {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.empty-hit {
+  color: rgba(243, 235, 224, 0.7);
+  padding: 8px;
+}
+
+.write-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.write-item {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(14, 61, 77, 0.06);
+}
+
+.write-item p {
+  margin: 4px 0 8px;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.check-mini {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
 .tabbar button {
   background: transparent;
   border: 0;

@@ -391,6 +391,8 @@ const App = (() => {
         <h1>A0 → C2+</h1>
         <p class="lede">Bir seviye en az %70 tamamlanmadan sonrakiler kilitli kalır. Atlamak yok — sistem bu.</p>
       </div>
+      <input type="search" id="road-search" class="road-search" placeholder="Görev veya birim ara…" autocomplete="off" />
+      <ul class="search-hits" id="search-hits" hidden></ul>
       <ol class="level-rail" id="level-rail"></ol>
     </section>`);
 
@@ -423,6 +425,37 @@ const App = (() => {
         render();
       });
       rail.appendChild(li);
+    });
+
+    const hits = section.querySelector("#search-hits");
+    section.querySelector("#road-search").addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      hits.innerHTML = "";
+      if (q.length < 2) {
+        hits.hidden = true;
+        return;
+      }
+      const found = [];
+      CURRICULUM.levels.forEach((level) => {
+        level.units.forEach((unit) => {
+          unit.tasks.forEach((task) => {
+            const hay = `${task.title} ${task.detail} ${unit.title} ${level.code}`.toLowerCase();
+            if (hay.includes(q)) found.push({ level, unit, task });
+          });
+        });
+      });
+      hits.hidden = false;
+      found.slice(0, 12).forEach(({ level, unit, task }) => {
+        const li = el(`<li><button type="button"><strong>${escapeHtml(task.title)}</strong><span>${escapeHtml(level.code)} · ${escapeHtml(unit.title)}</span></button></li>`);
+        li.querySelector("button").addEventListener("click", () => {
+          selectedLevelId = level.id;
+          Progress.setLevel(level.id);
+          view = "level";
+          render();
+        });
+        hits.appendChild(li);
+      });
+      if (!found.length) hits.appendChild(el(`<li class="empty-hit">Sonuç yok</li>`));
     });
     return section;
   }
@@ -499,9 +532,13 @@ const App = (() => {
     challengeQueue = [];
     challengeIndex = 0;
     if (mode === "challenge") {
-      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate"];
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional"];
       challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
       trainerQ = challengeQueue[0];
+      return;
+    }
+    if (mode === "write") {
+      trainerQ = null;
       return;
     }
     trainerQ = nextTrainerQuestion(mode);
@@ -609,6 +646,33 @@ const App = (() => {
         input: true
       };
     }
+    if (mode === "prep") {
+      const item = TRAINERS.prep[Math.floor(Math.random() * TRAINERS.prep.length)];
+      return {
+        kind: "prep",
+        prompt: item.tr,
+        sub: item.gap,
+        answer: item.options[item.a],
+        options: item.options,
+        hint: item.tip,
+        speak: item.options[item.a],
+        input: false
+      };
+    }
+    if (mode === "conditional") {
+      const item = TRAINERS.conditional[Math.floor(Math.random() * TRAINERS.conditional.length)];
+      const wrong = shuffle(TRAINERS.conditional.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "conditional",
+        prompt: item.tr,
+        sub: "Doğru Yunanca karşılık?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -647,10 +711,15 @@ const App = (() => {
     time: "Saatler",
     aorist: "Düzensiz aorist",
     translate: "TR → EL",
+    prep: "Edatlar",
+    conditional: "Koşul (αν)",
+    write: "Yazma",
     challenge: "Günlük challenge"
   };
 
   function renderTrainer() {
+    if (trainerMode === "write") return renderWritingStudio();
+
     if (trainerMode === "challenge" && challengeIndex >= challengeQueue.length) {
       Progress.bumpTrainer("challenge");
       Progress.winChallenge();
@@ -748,6 +817,42 @@ const App = (() => {
     return wrap;
   }
 
+  function renderWritingStudio() {
+    const state = Progress.load();
+    const items = TRAINERS.writing;
+    const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card wide-card">
+      <p class="brand-mark">Yazma stüdyosu</p>
+      <p class="lede">Prompt seç, süre tut, checklist’i işaretle. Metni defterine yaz; burada üretim disiplini kurulur.</p>
+      <ul class="write-list" id="write-list"></ul>
+      <button class="btn btn-ghost" id="train-exit" style="width:100%;margin-top:10px">Çık</button>
+    </div></div>`);
+    const list = wrap.querySelector("#write-list");
+    items.forEach((w) => {
+      const done = !!(state.writeDone || {})[w.id];
+      const li = el(`<li class="write-item">
+        <div>
+          <strong>${escapeHtml(w.title)}</strong>
+          <p>${escapeHtml(w.prompt)}</p>
+          <ul class="check-mini">${w.checklist.map((c) => `<li>${escapeHtml(c)}</li>`).join("")}</ul>
+        </div>
+        <button type="button" class="btn ${done ? "btn-ghost" : "btn-primary"}" data-w="${w.id}">${done ? "Tekrar" : "~" + w.minutes + " dk · Bitir"}</button>
+      </li>`);
+      li.querySelector("button").addEventListener("click", () => {
+        Progress.markWrite(w.id);
+        Progress.logStudyMinutes(w.minutes);
+        alert("İşaretlendi. Metni kendin yazmış olmalısın — dürüstlük şart.");
+        render();
+      });
+      list.appendChild(li);
+    });
+    wrap.querySelector("#train-exit").addEventListener("click", () => {
+      trainerMode = null;
+      view = "today";
+      render();
+    });
+    return wrap;
+  }
+
   function trainerButtons(ts) {
     return `
       <button type="button" class="btn btn-primary challenge-btn" data-train="challenge">Günlük challenge (10 soru)</button>
@@ -757,10 +862,13 @@ const App = (() => {
         <button type="button" class="btn btn-ghost sand-btn" data-train="gender">Madde (${ts.gender || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="aspect">Aspect (${ts.aspect || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="aorist">Aorist (${ts.aorist || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="prep">Edat (${ts.prep || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="conditional">αν (${ts.conditional || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="number">Sayı (${ts.number || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="time">Saat (${ts.time || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="dictation">Dikte (${ts.dictation || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="translate">TR→EL (${ts.translate || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
       </div>`;
   }
 
@@ -781,7 +889,16 @@ const App = (() => {
       const grid = section.querySelector("#deck-grid");
       deckIds.forEach((id) => {
         const n = CONTENT.decks[id].length;
-        const label = id === "yds" ? "YDS" : id.toUpperCase();
+        const label =
+          id === "yds"
+            ? "YDS"
+            : id === "food"
+              ? "Yemek"
+              : id === "travel"
+                ? "Seyahat"
+                : id === "exam"
+                  ? "Sınav"
+                  : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);

@@ -22,7 +22,8 @@ const Progress = (() => {
     studyLog: {},
     trainerStats: { alpha: 0, verb: 0, gender: 0, aspect: 0, number: 0, dictation: 0, time: 0, aorist: 0, translate: 0, challenge: 0 },
     challengesWon: 0,
-    unlockedBadges: {}
+    unlockedBadges: {},
+    writeDone: {}
   });
 
   function load() {
@@ -238,6 +239,16 @@ const Progress = (() => {
     return state;
   }
 
+  function markWrite(id) {
+    const state = load();
+    state.writeDone = state.writeDone || {};
+    state.writeDone[id] = new Date().toISOString();
+    touchActivity(state);
+    save(state);
+    refreshBadges();
+    return state;
+  }
+
   function refreshBadges() {
     if (typeof TRAINERS === "undefined" || !TRAINERS.badges) return load();
     const state = load();
@@ -404,6 +415,7 @@ const Progress = (() => {
     bumpTrainer,
     weekActivity,
     winChallenge,
+    markWrite,
     refreshBadges,
     exportData,
     importData
