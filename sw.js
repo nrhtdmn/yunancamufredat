@@ -1,4 +1,4 @@
-const CACHE = "odigos-v7";
+const CACHE = "odigos-v8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./js/content.js",
   "./js/trainers.js",
   "./js/drills.js",
+  "./js/extras.js",
   "./js/progress.js",
   "./js/app.js",
   "./icons/icon-192.svg",

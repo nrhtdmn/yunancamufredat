@@ -295,6 +295,10 @@ const App = (() => {
         </div>
         <button class="btn btn-ghost" id="go-cards">Kart aç</button>
       </article>
+      <article class="trio-card">
+        <p class="eyebrow" style="color:var(--bg1)">Bugünün 3’lüsü</p>
+        <div class="trio-row" id="trio-row"></div>
+      </article>
       <article class="mini-action study-log-box">
         <div>
           <strong>Çalışma süresi ekle</strong>
@@ -345,6 +349,23 @@ const App = (() => {
       cardDeckId = deckId;
       startDeck(deckId);
       render();
+    });
+
+    const trio = section.querySelector("#trio-row");
+    todayTrio(state).forEach((item) => {
+      const b = el(`<button type="button" class="btn btn-ghost">${escapeHtml(item.label)}</button>`);
+      b.addEventListener("click", () => {
+        if (item.action === "cards") {
+          view = "cards";
+          cardDeckId = deckId;
+          startDeck(deckId);
+          render();
+          return;
+        }
+        startTrainer(item.action);
+        render();
+      });
+      trio.appendChild(b);
     });
 
     section.querySelector("#mins-form")?.addEventListener("submit", (e) => {
@@ -532,12 +553,16 @@ const App = (() => {
     challengeQueue = [];
     challengeIndex = 0;
     if (mode === "challenge") {
-      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional"];
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle"];
       challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
       trainerQ = challengeQueue[0];
       return;
     }
     if (mode === "write") {
+      trainerQ = null;
+      return;
+    }
+    if (mode === "dialogue" || mode === "listen") {
       trainerQ = null;
       return;
     }
@@ -673,6 +698,44 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "pronoun") {
+      const item = EXTRAS.pronouns[Math.floor(Math.random() * EXTRAS.pronouns.length)];
+      return {
+        kind: "pronoun",
+        prompt: item.prompt,
+        sub: "Doğru zamir cümlesi?",
+        answer: item.answer,
+        options: shuffle(item.options.slice()),
+        speak: item.answer,
+        input: false
+      };
+    }
+    if (mode === "particle") {
+      const item = EXTRAS.particles[Math.floor(Math.random() * EXTRAS.particles.length)];
+      return {
+        kind: "particle",
+        prompt: item.tr,
+        sub: "Doğru yapı?",
+        answer: item.options[item.a],
+        options: item.options,
+        hint: item.tip,
+        speak: item.options[item.a],
+        input: false
+      };
+    }
+    if (mode === "passive") {
+      const item = EXTRAS.passive[Math.floor(Math.random() * EXTRAS.passive.length)];
+      const wrong = shuffle(EXTRAS.passive.filter((x) => x.passive !== item.passive)).slice(0, 3).map((x) => x.passive);
+      return {
+        kind: "passive",
+        prompt: item.active,
+        sub: "Pasif / edilgen karşılık?",
+        answer: item.passive,
+        options: shuffle([item.passive, ...wrong]),
+        speak: item.passive,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -713,12 +776,19 @@ const App = (() => {
     translate: "TR → EL",
     prep: "Edatlar",
     conditional: "Koşul (αν)",
+    pronoun: "Zamirler",
+    particle: "θα / να / ας",
+    passive: "Pasif",
+    dialogue: "Diyalog",
+    listen: "Dinle-anla",
     write: "Yazma",
     challenge: "Günlük challenge"
   };
 
   function renderTrainer() {
     if (trainerMode === "write") return renderWritingStudio();
+    if (trainerMode === "dialogue") return renderDialogueStudio();
+    if (trainerMode === "listen") return renderListenQuiz();
 
     if (trainerMode === "challenge" && challengeIndex >= challengeQueue.length) {
       Progress.bumpTrainer("challenge");
@@ -853,6 +923,99 @@ const App = (() => {
     return wrap;
   }
 
+  function renderDialogueStudio() {
+    const d = EXTRAS.dialogues[Math.floor(Math.random() * EXTRAS.dialogues.length)];
+    const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card wide-card">
+      <p class="brand-mark">Diyalog · ${escapeHtml(d.title)}</p>
+      <p class="lede">Her satırı dinle, sonra sen oku. Rol değiştirip tekrarla.</p>
+      <ol class="dialogue-lines" id="d-lines"></ol>
+      <button class="btn btn-primary" id="d-next">Başka diyalog</button>
+      <button class="btn btn-ghost" id="train-exit" style="width:100%;margin-top:8px">Çık</button>
+    </div></div>`);
+    const ol = wrap.querySelector("#d-lines");
+    d.lines.forEach((line) => {
+      const li = el(`<li><span class="sp">${escapeHtml(line.sp)}</span><button type="button" class="line-el">${escapeHtml(line.el)}</button></li>`);
+      li.querySelector("button").addEventListener("click", () => speakGreek(line.el));
+      ol.appendChild(li);
+    });
+    wrap.querySelector("#d-next").addEventListener("click", () => {
+      Progress.bumpTrainer("dialogue");
+      render();
+    });
+    wrap.querySelector("#train-exit").addEventListener("click", () => {
+      trainerMode = null;
+      view = "today";
+      render();
+    });
+    return wrap;
+  }
+
+  function renderListenQuiz() {
+    if (!trainerQ || trainerQ.kind !== "listen") {
+      const item = EXTRAS.listenQuiz[Math.floor(Math.random() * EXTRAS.listenQuiz.length)];
+      trainerQ = { kind: "listen", ...item, speak: item.say };
+      trainerFeedback = null;
+      setTimeout(() => speakGreek(item.say), 300);
+    }
+    const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
+      <p class="eyebrow">Dinle-anla · ${trainerScore.ok}/${trainerScore.n}</p>
+      <h1 class="diag-q">♪ Sesli soru</h1>
+      <p class="lede center-soft">${escapeHtml(trainerQ.q)}</p>
+      <button type="button" class="btn btn-ghost" id="say-q">Tekrar dinle</button>
+      <div class="diag-opts" id="opts"></div>
+      ${trainerFeedback ? `<p class="feedback ${trainerFeedback.ok ? "ok" : "bad"}">${escapeHtml(trainerFeedback.msg)}</p><button class="btn btn-primary" id="next">Sonraki</button>` : ""}
+      <button class="btn btn-ghost" id="train-exit" style="width:100%;margin-top:10px">Çık</button>
+    </div></div>`);
+    wrap.querySelector("#say-q").addEventListener("click", () => speakGreek(trainerQ.speak));
+    if (!trainerFeedback) {
+      trainerQ.options.forEach((opt, i) => {
+        const b = el(`<button type="button" class="btn diag-opt">${escapeHtml(opt)}</button>`);
+        b.addEventListener("click", () => {
+          const ok = i === trainerQ.a;
+          trainerScore.n++;
+          if (ok) trainerScore.ok++;
+          Progress.bumpTrainer("listen");
+          trainerFeedback = { ok, msg: ok ? "Doğru." : `Yanlış. Duyulan: ${trainerQ.say}` };
+          render();
+        });
+        wrap.querySelector("#opts").appendChild(b);
+      });
+    }
+    wrap.querySelector("#next")?.addEventListener("click", () => {
+      trainerFeedback = null;
+      trainerQ = null;
+      render();
+    });
+    wrap.querySelector("#train-exit").addEventListener("click", () => {
+      trainerMode = null;
+      trainerQ = null;
+      view = "today";
+      render();
+    });
+    return wrap;
+  }
+
+  function todayTrio(state) {
+    const level = state.currentLevelId || "a1";
+    const picks = [];
+    const map = [
+      { id: "cards", label: "Kelime kartı", action: "cards" },
+      { id: "challenge", label: "Challenge", action: "challenge" },
+      { id: "aorist", label: "Aorist", action: "aorist" },
+      { id: "listen", label: "Dinle-anla", action: "listen" },
+      { id: "write", label: "Yazma", action: "write" },
+      { id: "prep", label: "Edat", action: "prep" }
+    ];
+    if (level === "a0" || level === "a1") {
+      picks.push(map[0], { id: "alpha", label: "Alfabe", action: "alpha" }, { id: "gender", label: "Madde", action: "gender" });
+    } else if (level === "a2" || level === "b1") {
+      picks.push(map[0], map[2], map[5]);
+    } else {
+      picks.push(map[1], map[3], map[4]);
+    }
+    return picks.slice(0, 3);
+  }
+
   function trainerButtons(ts) {
     return `
       <button type="button" class="btn btn-primary challenge-btn" data-train="challenge">Günlük challenge (10 soru)</button>
@@ -862,12 +1025,17 @@ const App = (() => {
         <button type="button" class="btn btn-ghost sand-btn" data-train="gender">Madde (${ts.gender || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="aspect">Aspect (${ts.aspect || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="aorist">Aorist (${ts.aorist || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="pronoun">Zamir (${ts.pronoun || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="particle">θα/να (${ts.particle || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="passive">Pasif (${ts.passive || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="prep">Edat (${ts.prep || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="conditional">αν (${ts.conditional || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="number">Sayı (${ts.number || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="time">Saat (${ts.time || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="dictation">Dikte (${ts.dictation || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="listen">Dinle (${ts.listen || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="translate">TR→EL (${ts.translate || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
       </div>`;
   }

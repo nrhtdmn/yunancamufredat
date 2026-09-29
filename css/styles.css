@@ -1183,6 +1183,50 @@ select {
   font-size: 0.82rem;
 }
 
+.trio-card {
+  background: rgba(255, 253, 249, 0.9);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.trio-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.dialogue-lines {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dialogue-lines li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.dialogue-lines .sp {
+  font-weight: 700;
+  color: var(--bg1);
+}
+
+.line-el {
+  text-align: left;
+  border: 0;
+  background: rgba(14, 61, 77, 0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: var(--font-greek);
+  cursor: pointer;
+  color: var(--ink);
+}
+
 .tabbar button {
   background: transparent;
   border: 0;
