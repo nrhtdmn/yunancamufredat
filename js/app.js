@@ -301,120 +301,61 @@ const App = (() => {
     const name = state.displayName ? `, ${escapeHtml(state.displayName)}` : "";
     const level = CURRICULUM.levels.find((l) => l.id === state.currentLevelId);
     const deckId = CONTENT.decks[level.id] ? level.id : level.id === "c2plus" ? "yds" : "a1";
-    const dueHint = CONTENT.decks[deckId] ? CONTENT.decks[deckId].length : 0;
-
     const todayMins = (state.studyLog || {})[Progress.todayStr()] || 0;
     const goal = state.dailyGoalMin || 45;
     const goalPct = Math.min(100, Math.round((todayMins / goal) * 100));
-    const week = Progress.weekActivity();
-    const ts = state.trainerStats || {};
-    const section = el(`<section class="view today-view">
+    const phrase = EXTRAS4.phrases[new Date().getDate() % EXTRAS4.phrases.length];
+    const doneToday = plan.items.filter(({ task }) => Progress.isDone(task.id)).length;
+    const section = el(`<section class="view today-view today-slim">
       <div class="hero-today">
-        <p class="eyebrow">Bugünün emri</p>
+        <p class="eyebrow">${escapeHtml(level.code)} · ${escapeHtml(plan.label)}</p>
         <h1>Merhaba${name}</h1>
-        <p class="lede">Aktif seviye: <strong>${escapeHtml(level.code)} · ${escapeHtml(level.title)}</strong> — ${escapeHtml(plan.label)}</p>
         <div class="goal-box">
-          <div class="goal-top"><span>Günlük hedef</span><span>${todayMins}/${goal} dk</span></div>
+          <div class="goal-top"><span>${todayMins}/${goal} dk</span><span>${doneToday}/${plan.items.length} görev</span></div>
           <div class="progress-line lg"><span style="width:${goalPct}%"></span></div>
         </div>
       </div>
-      <div class="week-strip" aria-label="Son 7 gün">
-        ${week
-          .map(
-            (d) =>
-              `<div class="week-day ${d.active ? "on" : ""}" title="${d.key}${d.mins ? " · " + d.mins + " dk" : ""}"><span>${d.label}</span><i></i></div>`
-          )
-          .join("")}
-      </div>
-      <article class="tip-card">
-        <p class="eyebrow" style="color:var(--bg1)">Günün ipucu</p>
-        <p>${escapeHtml(TRAINERS.tips[new Date().getDate() % TRAINERS.tips.length])}</p>
+
+      <article class="phrase-slim" id="phrase-slim">
+        <p class="greek-line">${escapeHtml(phrase.el)}</p>
+        <p class="meta">${escapeHtml(phrase.tr)}</p>
       </article>
-      <article class="tip-card phrase-card">
-        <p class="eyebrow" style="color:var(--bg1)">Günün kalıbı</p>
-        <p class="greek-line phrase-el">${escapeHtml(EXTRAS4.phrases[new Date().getDate() % EXTRAS4.phrases.length].el)}</p>
-        <p class="meta">${escapeHtml(EXTRAS4.phrases[new Date().getDate() % EXTRAS4.phrases.length].tr)}</p>
-        <button type="button" class="btn btn-ghost" id="say-phrase">♪ Dinle</button>
-      </article>
+
       ${
         next
           ? `<article class="focus-card">
-              <p class="eyebrow">Sıradaki görev</p>
+              <p class="eyebrow">Şimdi yap</p>
               <h2>${escapeHtml(next.task.title)}</h2>
               <p>${escapeHtml(next.task.detail)}</p>
               <div class="focus-meta">
                 ${typeBadge(next.task.type)}
-                <span class="meta">${escapeHtml(next.level.code)} · ${escapeHtml(next.unit.title)} · ~${next.task.minutes} dk</span>
+                <span class="meta">~${next.task.minutes} dk · ${escapeHtml(next.unit.title)}</span>
               </div>
               <button class="btn btn-primary" data-do="${next.task.id}" data-min="${next.task.minutes}">Tamamladım</button>
             </article>`
-          : `<article class="focus-card done"><h2>Tüm yol tamam</h2><p>Müfredattaki her görev işaretli. Bakım rutinine geç.</p></article>`
+          : `<article class="focus-card done"><h2>Bugün bitti</h2><p>Plan tamam. Kart veya hızlı tur ile pekiştir.</p></article>`
       }
-      <article class="mini-action">
-        <div>
-          <strong>Kelime turu</strong>
-          <p>${escapeHtml(deckId.toUpperCase())} destesinden ~${dueHint} kart hazır</p>
-        </div>
-        <button class="btn btn-ghost" id="go-cards">Kart aç</button>
-      </article>
-      <article class="trio-card">
-        <p class="eyebrow" style="color:var(--bg1)">Bugünün 3’lüsü</p>
-        <div class="trio-row" id="trio-row"></div>
-      </article>
-      <article class="mini-action study-log-box">
-        <div>
-          <strong>Çalışma süresi ekle</strong>
-          <p>Kaynak dışında çalıştıysan buraya yaz</p>
-        </div>
-        <form id="mins-form" class="mins-form">
-          <input name="mins" type="number" min="5" max="300" step="5" value="25" aria-label="Dakika" />
-          <button type="submit" class="btn btn-ghost">+ dk</button>
-        </form>
-      </article>
-      <article class="mini-action">
-        <div>
-          <strong>Hedef ayarla</strong>
-          <p>Günlük dakika hedefi</p>
-        </div>
-        <select id="goal-select" class="goal-select">
-          ${[25, 45, 60, 90].map((g) => `<option value="${g}" ${g === goal ? "selected" : ""}>${g} dk</option>`).join("")}
-        </select>
-      </article>
-      <article class="mini-action">
-        <div>
-          <strong>Odak sayacı</strong>
-          <p>${focusLeft > 0 ? focusLeft + " sn kaldı" : "25 dk pomodoro"}</p>
-        </div>
-        <button type="button" class="btn btn-ghost" id="focus-btn">${focusLeft > 0 ? "Durdur" : "Başlat"}</button>
-      </article>
-      <article class="mini-action">
-        <div>
-          <strong>Ses hızı</strong>
-          <p>TTS okuma hızı</p>
-        </div>
-        <select id="tts-rate" class="goal-select">
-          <option value="0.75" ${ttsRate === 0.75 ? "selected" : ""}>Yavaş</option>
-          <option value="0.9" ${ttsRate === 0.9 ? "selected" : ""}>Normal</option>
-          <option value="1.05" ${ttsRate === 1.05 ? "selected" : ""}>Hızlı</option>
-        </select>
-      </article>
-      ${trainerButtons(ts)}
-      <div class="section-head">
-        <h3>Bugünkü plan</h3>
-        <select id="mode-select" aria-label="Günlük tempo">
-          ${Object.entries(CURRICULUM.dailyTemplates)
-            .map(
-              ([k, v]) =>
-                `<option value="${k}" ${k === state.dailyMode ? "selected" : ""}>${escapeHtml(v.label)}</option>`
-            )
-            .join("")}
-        </select>
+
+      <div class="today-actions">
+        <button type="button" class="btn btn-primary" id="go-cards">Kartlar</button>
+        <button type="button" class="btn btn-ghost" data-train="flash5">Hızlı 5</button>
+        <button type="button" class="btn btn-ghost" data-train="challenge">Challenge</button>
       </div>
-      <ul class="task-list" id="today-list"></ul>
-      <div class="principles">
-        <h3>Kurallar</h3>
-        <ul>${CURRICULUM.principles.map((p) => `<li>${escapeHtml(p)}</li>`).join("")}</ul>
-      </div>
+
+      <details class="plan-fold">
+        <summary>Bugünün planı (${doneToday}/${plan.items.length})</summary>
+        <div class="section-head plan-mode">
+          <select id="mode-select" aria-label="Günlük tempo">
+            ${Object.entries(CURRICULUM.dailyTemplates)
+              .map(
+                ([k, v]) =>
+                  `<option value="${k}" ${k === state.dailyMode ? "selected" : ""}>${escapeHtml(v.label)}</option>`
+              )
+              .join("")}
+          </select>
+        </div>
+        <ul class="task-list" id="today-list"></ul>
+      </details>
     </section>`);
 
     const list = section.querySelector("#today-list");
@@ -440,67 +381,8 @@ const App = (() => {
       render();
     });
 
-    section.querySelector("#say-phrase")?.addEventListener("click", () => {
-      const p = EXTRAS4.phrases[new Date().getDate() % EXTRAS4.phrases.length];
-      speakGreek(p.el);
-    });
-
-    const trio = section.querySelector("#trio-row");
-    todayTrio(state).forEach((item) => {
-      const b = el(`<button type="button" class="btn btn-ghost">${escapeHtml(item.label)}</button>`);
-      b.addEventListener("click", () => {
-        if (item.action === "cards") {
-          view = "cards";
-          cardDeckId = deckId;
-          startDeck(deckId);
-          render();
-          return;
-        }
-        startTrainer(item.action);
-        render();
-      });
-      trio.appendChild(b);
-    });
-
-    section.querySelector("#mins-form")?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const mins = Number(new FormData(e.target).get("mins")) || 0;
-      Progress.logStudyMinutes(mins);
-      render();
-    });
-
-    section.querySelector("#goal-select")?.addEventListener("change", (e) => {
-      Progress.setDailyGoal(e.target.value);
-      render();
-    });
-
-    section.querySelector("#focus-btn")?.addEventListener("click", () => {
-      if (focusTimer) {
-        clearInterval(focusTimer);
-        focusTimer = null;
-        focusLeft = 0;
-        render();
-        return;
-      }
-      focusLeft = 25 * 60;
-      focusTimer = setInterval(() => {
-        focusLeft--;
-        const btn = document.getElementById("focus-btn");
-        const p = btn && btn.parentElement && btn.parentElement.querySelector("p");
-        if (p) p.textContent = focusLeft > 0 ? focusLeft + " sn kaldı" : "Bitti";
-        if (focusLeft <= 0) {
-          clearInterval(focusTimer);
-          focusTimer = null;
-          Progress.logStudyMinutes(25);
-          alert("25 dk odak tamam. Süre eklendi.");
-          render();
-        }
-      }, 1000);
-      render();
-    });
-
-    section.querySelector("#tts-rate")?.addEventListener("change", (e) => {
-      ttsRate = Number(e.target.value) || 0.9;
+    section.querySelector("#phrase-slim")?.addEventListener("click", () => {
+      speakGreek(phrase.el);
     });
 
     section.querySelectorAll("[data-train]").forEach((btn) => {
@@ -1798,35 +1680,20 @@ const App = (() => {
     const btn = (id, label) =>
       `<button type="button" class="btn btn-ghost sand-btn" data-train="${id}">${label} (${ts[id] || 0})</button>`;
     return `
-      <div class="launch-stack">
-        <button type="button" class="btn btn-primary challenge-btn" data-train="challenge">Günlük challenge (10)</button>
-        <button type="button" class="btn btn-primary challenge-btn" data-train="flash5">Hızlı 5</button>
-        <button type="button" class="btn btn-primary challenge-btn" data-train="speed10">Hızlı 10</button>
-        <button type="button" class="btn btn-primary challenge-btn" data-train="exam">Mini sınav (20)</button>
-        <button type="button" class="btn btn-ghost sand-btn challenge-btn" data-train="review">Yanlış tekrarı (${wrongN})</button>
+      <div class="launch-stack launch-slim">
+        <button type="button" class="btn btn-primary" data-train="challenge">Challenge</button>
+        <button type="button" class="btn btn-primary" data-train="flash5">Hızlı 5</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="speed10">Hızlı 10</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="exam">Sınav</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="review">Yanlışlar (${wrongN})</button>
       </div>
-      <details class="train-cat" open>
-        <summary>Temel</summary>
+      <details class="train-cat">
+        <summary>Tüm antrenmanlar</summary>
         <div class="quick-train multi">
           ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("ordinal", "Sıra")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("question", "Soru")}${btn("match", "Eşleştir")}
-        </div>
-      </details>
-      <details class="train-cat">
-        <summary>Fiil & zaman</summary>
-        <div class="quick-train multi">
-          ${btn("verb", "Fiil")}${btn("aspect", "Aspect")}${btn("aorist", "Aorist")}${btn("perfect", "Perfect")}${btn("imperative", "Emir")}${btn("subjunctive", "να aspect")}${btn("particle", "θα/να")}${btn("reflexive", "Dönüşlü")}
-        </div>
-      </details>
-      <details class="train-cat">
-        <summary>Yapı & üslup</summary>
-        <div class="quick-train multi">
+          ${btn("verb", "Fiil")}${btn("aspect", "Aspect")}${btn("aorist", "Aorist")}${btn("perfect", "Perfect")}${btn("imperative", "Emir")}${btn("subjunctive", "να")}${btn("particle", "θα/να")}${btn("reflexive", "Dönüşlü")}
           ${btn("pronoun", "Zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("opposite", "Zıt")}${btn("synonym", "Eşanlam")}${btn("connector", "Bağlaç")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
-        </div>
-      </details>
-      <details class="train-cat">
-        <summary>Gündelik</summary>
-        <div class="quick-train multi">
-          ${btn("direction", "Yön")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle kur")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
+          ${btn("direction", "Yön")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
           <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
           <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
         </div>
@@ -1839,13 +1706,13 @@ const App = (() => {
     if (!cardDeckId) {
       const section = el(`<section class="view cards-view">
         <div class="view-intro">
-          <p class="eyebrow">Kelime</p>
+          <p class="eyebrow">Kelime & antrenman</p>
           <h1>Kartlar</h1>
-          <p class="lede">Leitner kutuları: bilmediğin kartlar sık döner. Önce Yunanca gör, çevir, işaretle.</p>
         </div>
         ${trainerButtons(ts)}
+        <p class="eyebrow sand-meta" style="margin:16px 0 8px">Desteler</p>
         <ul class="deck-grid" id="deck-grid"></ul>
-        <p class="meta sand-meta">Toplam kart tekrarı: ${state.cardsReviewed || 0}</p>
+        <p class="meta sand-meta">Tekrar: ${state.cardsReviewed || 0}</p>
       </section>`);
       const grid = section.querySelector("#deck-grid");
       deckIds.forEach((id) => {
@@ -2214,14 +2081,38 @@ const App = (() => {
       <div class="view-intro">
         <p class="eyebrow">İlerleme</p>
         <h1>Senin haritan</h1>
-        <p class="lede">Başlangıç: ${state.startDate || "—"} · Seri: ${stats.streak} · Kart: ${state.cardsReviewed || 0}</p>
+        <p class="lede">${stats.streak} gün seri · ${state.cardsReviewed || 0} kart · ${hours} sa</p>
       </div>
       <div class="stat-grid">
-        <div class="stat"><span class="stat-n">${stats.pct}%</span><span class="stat-l">Genel tamamlanma</span></div>
-        <div class="stat"><span class="stat-n">${stats.done}</span><span class="stat-l">Bitmiş görev</span></div>
-        <div class="stat"><span class="stat-n">${hours}</span><span class="stat-l">Saat (işaretli)</span></div>
-        <div class="stat"><span class="stat-n">${stats.streak}</span><span class="stat-l">Günlük seri</span></div>
+        <div class="stat"><span class="stat-n">${stats.pct}%</span><span class="stat-l">Tamamlanma</span></div>
+        <div class="stat"><span class="stat-n">${stats.done}</span><span class="stat-l">Görev</span></div>
+        <div class="stat"><span class="stat-n">${stats.streak}</span><span class="stat-l">Seri</span></div>
+        <div class="stat"><span class="stat-n">${hours}</span><span class="stat-l">Saat</span></div>
       </div>
+      <article class="info-panel journal-panel settings-panel">
+        <h3>Ayarlar</h3>
+        <div class="settings-grid">
+          <label>Hedef
+            <select id="goal-select" class="goal-select">
+              ${[25, 45, 60, 90].map((g) => `<option value="${g}" ${g === (state.dailyGoalMin || 45) ? "selected" : ""}>${g} dk</option>`).join("")}
+            </select>
+          </label>
+          <label>Ses hızı
+            <select id="tts-rate" class="goal-select">
+              <option value="0.75" ${ttsRate === 0.75 ? "selected" : ""}>Yavaş</option>
+              <option value="0.9" ${ttsRate === 0.9 ? "selected" : ""}>Normal</option>
+              <option value="1.05" ${ttsRate === 1.05 ? "selected" : ""}>Hızlı</option>
+            </select>
+          </label>
+        </div>
+        <div class="settings-row">
+          <form id="mins-form" class="mins-form">
+            <input name="mins" type="number" min="5" max="300" step="5" value="25" aria-label="Dakika" />
+            <button type="submit" class="btn btn-ghost">+ dk</button>
+          </form>
+          <button type="button" class="btn btn-ghost" id="focus-btn">${focusLeft > 0 ? "Durdur " + focusLeft + "s" : "Odak 25′"}</button>
+        </div>
+      </article>
       ${
         diag
           ? `<article class="info-panel diag-summary">
@@ -2232,11 +2123,11 @@ const App = (() => {
       }
       <button class="btn btn-ghost sand-btn" id="rerun-diag">Teşhis sınavını yeniden çalıştır</button>
       <article class="info-panel journal-panel">
-        <h3>Beceri yoğunluğu</h3>
+        <h3>Beceri</h3>
         <ul class="skill-bars" id="skill-bars"></ul>
       </article>
       <article class="info-panel journal-panel">
-        <h3>30 gün aktivite</h3>
+        <h3>30 gün</h3>
         <div class="heat-grid" id="heat-grid"></div>
       </article>
       <article class="info-panel journal-panel">
@@ -2244,8 +2135,7 @@ const App = (() => {
         <ul class="badge-grid" id="badge-grid"></ul>
       </article>
       <article class="info-panel journal-panel">
-        <h3>Yedekle / Geri yükle</h3>
-        <p class="hint-inline">İlerlemeyi JSON olarak indir veya başka cihazdan yükle.</p>
+        <h3>Yedek</h3>
         <div class="backup-row">
           <button type="button" class="btn btn-primary" id="export-btn">Dışa aktar</button>
           <label class="btn btn-ghost file-label">İçe aktar<input type="file" id="import-file" accept="application/json,.json" hidden /></label>
@@ -2253,7 +2143,6 @@ const App = (() => {
       </article>
       <article class="info-panel journal-panel">
         <h3>Hata günlüğü</h3>
-        <p class="hint-inline">Yanlış soru, karışan yapı, unutulan kelime — buraya yaz.</p>
         <form id="journal-form" class="journal-form">
           <select name="tag">
             <option value="yds">YDS</option>
@@ -2261,12 +2150,12 @@ const App = (() => {
             <option value="vocab">Kelime</option>
             <option value="genel">Genel</option>
           </select>
-          <input name="text" type="text" maxlength="500" placeholder="Örn. αν + aorist karıştırdım" required />
+          <input name="text" type="text" maxlength="500" placeholder="Not…" required />
           <button type="submit" class="btn btn-primary">Ekle</button>
         </form>
         <ul class="journal-list" id="journal-list"></ul>
       </article>
-      <h3 class="section-title">Seviye kırılımı</h3>
+      <h3 class="section-title">Seviyeler</h3>
       <ul class="break-list" id="break-list"></ul>
       <div class="danger-zone">
         <button class="btn btn-ghost" id="reset-btn">Tüm ilerlemeyi sıfırla</button>
@@ -2324,6 +2213,43 @@ const App = (() => {
           <div class="progress-line"><span style="width:${ls.pct}%;background:${level.color}"></span></div>
         </li>`)
       );
+    });
+
+    section.querySelector("#goal-select")?.addEventListener("change", (e) => {
+      Progress.setDailyGoal(e.target.value);
+      render();
+    });
+    section.querySelector("#tts-rate")?.addEventListener("change", (e) => {
+      ttsRate = Number(e.target.value) || 0.9;
+    });
+    section.querySelector("#mins-form")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const mins = Number(new FormData(e.target).get("mins")) || 0;
+      Progress.logStudyMinutes(mins);
+      render();
+    });
+    section.querySelector("#focus-btn")?.addEventListener("click", () => {
+      if (focusTimer) {
+        clearInterval(focusTimer);
+        focusTimer = null;
+        focusLeft = 0;
+        render();
+        return;
+      }
+      focusLeft = 25 * 60;
+      focusTimer = setInterval(() => {
+        focusLeft--;
+        const btn = document.getElementById("focus-btn");
+        if (btn) btn.textContent = focusLeft > 0 ? "Durdur " + focusLeft + "s" : "Odak 25′";
+        if (focusLeft <= 0) {
+          clearInterval(focusTimer);
+          focusTimer = null;
+          Progress.logStudyMinutes(25);
+          alert("25 dk odak tamam.");
+          render();
+        }
+      }, 1000);
+      render();
     });
 
     section.querySelector("#rerun-diag").addEventListener("click", () => {
