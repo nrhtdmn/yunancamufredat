@@ -1,6 +1,13 @@
 const App = (() => {
   let view = "today";
   let selectedLevelId = null;
+  let cardDeckId = null;
+  let cardQueue = [];
+  let cardIndex = 0;
+  let cardFlipped = false;
+  let diagIndex = 0;
+  let diagAnswers = [];
+  let diagActive = false;
 
   function $(sel, root = document) {
     return root.querySelector(sel);
@@ -25,9 +32,23 @@ const App = (() => {
     return `<span class="badge badge-${escapeHtml(type)}">${escapeHtml(label)}</span>`;
   }
 
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   function render() {
     const state = Progress.load();
     const root = $("#app");
+    if (diagActive) {
+      root.innerHTML = "";
+      root.appendChild(renderDiagnostic());
+      return;
+    }
     if (!state.onboardingDone) {
       root.innerHTML = "";
       root.appendChild(renderOnboarding());
@@ -52,19 +73,20 @@ const App = (() => {
           <label>
             <span>Şu an yaklaşık seviyen</span>
             <select name="level" required>
-              ${CURRICULUM.levels.map((l) => `<option value="${l.id}">${l.code} — ${escapeHtml(l.title)}</option>`).join("")}
+              ${CURRICULUM.levels.map((l) => `<option value="${l.id}" ${l.id === "a1" ? "selected" : ""}>${l.code} — ${escapeHtml(l.title)}</option>`).join("")}
             </select>
           </label>
-          <p class="hint">8 aydır çalışıyorsan genelde A1–A2 arasıdır. Emin değilsen A1’den başla; eksik birimleri hızlıca işaretlersin.</p>
+          <p class="hint">8 aydır çalışıyorsan genelde A1–A2. Emin değilsen teşhis sınavını çalıştır.</p>
           <label>
             <span>Günlük tempo</span>
             <select name="mode">
               ${Object.entries(CURRICULUM.dailyTemplates)
-                .map(([k, v]) => `<option value="${k}">${escapeHtml(v.label)}</option>`)
+                .map(([k, v]) => `<option value="${k}" ${k === "standard" ? "selected" : ""}>${escapeHtml(v.label)}</option>`)
                 .join("")}
             </select>
           </label>
           <button type="submit" class="btn btn-primary">Yolculuğu başlat</button>
+          <button type="button" class="btn btn-ghost" id="start-diag">Önce teşhis sınavı (16 soru)</button>
         </form>
       </div>
     </div>`);
@@ -80,6 +102,73 @@ const App = (() => {
       view = "today";
       render();
     });
+
+    wrap.querySelector("#start-diag").addEventListener("click", () => {
+      diagIndex = 0;
+      diagAnswers = [];
+      diagActive = true;
+      render();
+    });
+    return wrap;
+  }
+
+  function renderDiagnostic() {
+    const items = CONTENT.diagnostic;
+    if (diagIndex >= items.length) {
+      const correct = diagAnswers.filter(Boolean).length;
+      const levelId = CONTENT.levelFromScore(correct, items.length);
+      const level = CURRICULUM.levels.find((l) => l.id === levelId);
+      Progress.saveDiagnostic({ correct, total: items.length, levelId });
+      const wrap = el(`<div class="onboard">
+        <div class="onboard-bg" aria-hidden="true"></div>
+        <div class="onboard-card">
+          <p class="brand-mark">Teşhis</p>
+          <h1>${correct}/${items.length}</h1>
+          <p class="lede">Önerilen başlangıç: <strong>${escapeHtml(level.code)} · ${escapeHtml(level.title)}</strong></p>
+          <button class="btn btn-primary" id="diag-apply">Bu seviyeyle başla</button>
+          <button class="btn btn-ghost" id="diag-again">Tekrar çöz</button>
+        </div>
+      </div>`);
+      wrap.querySelector("#diag-apply").addEventListener("click", () => {
+        const state = Progress.load();
+        Progress.completeOnboarding({
+          name: state.displayName || "",
+          levelId,
+          dailyMode: state.dailyMode || "standard"
+        });
+        diagActive = false;
+        view = "today";
+        render();
+      });
+      wrap.querySelector("#diag-again").addEventListener("click", () => {
+        diagIndex = 0;
+        diagAnswers = [];
+        render();
+      });
+      return wrap;
+    }
+
+    const item = items[diagIndex];
+    const wrap = el(`<div class="onboard">
+      <div class="onboard-bg" aria-hidden="true"></div>
+      <div class="onboard-card diag-card">
+        <p class="eyebrow">Soru ${diagIndex + 1} / ${items.length}</p>
+        <h1 class="diag-q">${escapeHtml(item.q)}</h1>
+        <div class="diag-opts" id="diag-opts"></div>
+        <div class="progress-line lg"><span style="width:${Math.round((diagIndex / items.length) * 100)}%"></span></div>
+      </div>
+    </div>`);
+
+    const opts = wrap.querySelector("#diag-opts");
+    item.options.forEach((opt, i) => {
+      const btn = el(`<button type="button" class="btn diag-opt">${escapeHtml(opt)}</button>`);
+      btn.addEventListener("click", () => {
+        diagAnswers.push(i === item.a);
+        diagIndex++;
+        render();
+      });
+      opts.appendChild(btn);
+    });
     return wrap;
   }
 
@@ -93,13 +182,14 @@ const App = (() => {
         </div>
         <div class="topbar-meta">
           <span class="pill" title="Seri">${stats.streak} gün seri</span>
-          <span class="pill muted">${stats.pct}% tamamlandı</span>
+          <span class="pill muted">${stats.pct}%</span>
         </div>
       </header>
       <main class="main" id="main"></main>
       <nav class="tabbar" aria-label="Ana menü">
         <button data-view="today" class="${view === "today" ? "active" : ""}"><span class="tab-icon">◎</span>Bugün</button>
         <button data-view="roadmap" class="${view === "roadmap" || view === "level" ? "active" : ""}"><span class="tab-icon">☰</span>Yol</button>
+        <button data-view="cards" class="${view === "cards" ? "active" : ""}"><span class="tab-icon">Α</span>Kart</button>
         <button data-view="yds" class="${view === "yds" ? "active" : ""}"><span class="tab-icon">✦</span>YDS</button>
         <button data-view="progress" class="${view === "progress" ? "active" : ""}"><span class="tab-icon">▣</span>İlerleme</button>
       </nav>
@@ -109,6 +199,7 @@ const App = (() => {
       btn.addEventListener("click", () => {
         view = btn.dataset.view;
         selectedLevelId = null;
+        cardDeckId = null;
         render();
       });
     });
@@ -117,6 +208,7 @@ const App = (() => {
     if (view === "today") main.appendChild(renderToday(state));
     else if (view === "roadmap") main.appendChild(renderRoadmap());
     else if (view === "level") main.appendChild(renderLevel(selectedLevelId || state.currentLevelId));
+    else if (view === "cards") main.appendChild(renderCards(state));
     else if (view === "yds") main.appendChild(renderYds());
     else if (view === "progress") main.appendChild(renderProgress(state));
 
@@ -128,6 +220,8 @@ const App = (() => {
     const next = Progress.nextIncompleteTask();
     const name = state.displayName ? `, ${escapeHtml(state.displayName)}` : "";
     const level = CURRICULUM.levels.find((l) => l.id === state.currentLevelId);
+    const deckId = CONTENT.decks[level.id] ? level.id : level.id === "c2plus" ? "yds" : "a1";
+    const dueHint = CONTENT.decks[deckId] ? CONTENT.decks[deckId].length : 0;
 
     const section = el(`<section class="view today-view">
       <div class="hero-today">
@@ -149,6 +243,13 @@ const App = (() => {
             </article>`
           : `<article class="focus-card done"><h2>Tüm yol tamam</h2><p>Müfredattaki her görev işaretli. Bakım rutinine geç.</p></article>`
       }
+      <article class="mini-action">
+        <div>
+          <strong>Kelime turu</strong>
+          <p>${escapeHtml(deckId.toUpperCase())} destesinden ~${dueHint} kart hazır</p>
+        </div>
+        <button class="btn btn-ghost" id="go-cards">Kart aç</button>
+      </article>
       <div class="section-head">
         <h3>Bugünkü plan</h3>
         <select id="mode-select" aria-label="Günlük tempo">
@@ -180,6 +281,13 @@ const App = (() => {
     section.querySelector("[data-do]")?.addEventListener("click", (e) => {
       const btn = e.currentTarget;
       Progress.toggleTask(btn.dataset.do, Number(btn.dataset.min) || 0);
+      render();
+    });
+
+    section.querySelector("#go-cards")?.addEventListener("click", () => {
+      view = "cards";
+      cardDeckId = deckId;
+      startDeck(deckId);
       render();
     });
 
@@ -252,6 +360,7 @@ const App = (() => {
   function renderLevel(levelId) {
     const level = CURRICULUM.levels.find((l) => l.id === levelId) || CURRICULUM.levels[0];
     const stats = Progress.levelStats(level);
+    const notes = CONTENT.grammar[level.id] || [];
     const section = el(`<section class="view level-view">
       <button class="back" id="back-road">← Yol haritası</button>
       <header class="level-hero" style="--accent:${level.color}">
@@ -262,6 +371,14 @@ const App = (() => {
         <div class="progress-line lg"><span style="width:${stats.pct}%"></span></div>
         <p class="meta">${stats.pct}% · ${stats.done}/${stats.total} görev · ~${stats.minutes} dk birikmiş</p>
       </header>
+      ${
+        notes.length
+          ? `<article class="unit-block grammar-block">
+              <header class="unit-head"><div><h2>Hızlı dilbilgisi</h2><p>Bu seviyenin omurgası</p></div></header>
+              <ul class="grammar-list">${notes.map((n) => `<li><strong>${escapeHtml(n.t)}</strong><span>${escapeHtml(n.b)}</span></li>`).join("")}</ul>
+            </article>`
+          : ""
+      }
       <div id="units"></div>
     </section>`);
 
@@ -286,6 +403,109 @@ const App = (() => {
       const list = block.querySelector(".task-list");
       unit.tasks.forEach((task) => list.appendChild(taskRow(level, unit, task)));
       units.appendChild(block);
+    });
+    return section;
+  }
+
+  function startDeck(deckId) {
+    const cards = CONTENT.decks[deckId] || [];
+    const state = Progress.load();
+    cardQueue = shuffle(
+      cards.map((c) => {
+        const key = Progress.cardKey(deckId, c.el);
+        const meta = state.cards[key] || { box: 1 };
+        return { ...c, box: meta.box || 1 };
+      })
+    ).sort((a, b) => a.box - b.box);
+    cardIndex = 0;
+    cardFlipped = false;
+    cardDeckId = deckId;
+  }
+
+  function renderCards(state) {
+    const deckIds = Object.keys(CONTENT.decks);
+    if (!cardDeckId) {
+      const section = el(`<section class="view cards-view">
+        <div class="view-intro">
+          <p class="eyebrow">Kelime</p>
+          <h1>Kartlar</h1>
+          <p class="lede">Leitner kutuları: bilmediğin kartlar sık döner. Önce Yunanca gör, çevir, işaretle.</p>
+        </div>
+        <ul class="deck-grid" id="deck-grid"></ul>
+        <p class="meta sand-meta">Toplam kart tekrarı: ${state.cardsReviewed || 0}</p>
+      </section>`);
+      const grid = section.querySelector("#deck-grid");
+      deckIds.forEach((id) => {
+        const n = CONTENT.decks[id].length;
+        const label = id === "yds" ? "YDS" : id.toUpperCase();
+        const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
+        btn.querySelector("button").addEventListener("click", () => {
+          startDeck(id);
+          render();
+        });
+        grid.appendChild(btn);
+      });
+      return section;
+    }
+
+    if (cardIndex >= cardQueue.length) {
+      const section = el(`<section class="view cards-view">
+        <div class="view-intro">
+          <p class="eyebrow">Bitti</p>
+          <h1>Tur tamam</h1>
+          <p class="lede">${escapeHtml(cardDeckId.toUpperCase())} destesi gözden geçirildi.</p>
+        </div>
+        <button class="btn btn-primary" id="again-deck">Aynı desteyi tekrar</button>
+        <button class="btn btn-ghost" id="back-decks">Destelere dön</button>
+      </section>`);
+      section.querySelector("#again-deck").addEventListener("click", () => {
+        startDeck(cardDeckId);
+        render();
+      });
+      section.querySelector("#back-decks").addEventListener("click", () => {
+        cardDeckId = null;
+        render();
+      });
+      return section;
+    }
+
+    const card = cardQueue[cardIndex];
+    const section = el(`<section class="view cards-view">
+      <button class="back" id="back-decks">← Desteler</button>
+      <p class="eyebrow sand-meta">${escapeHtml(cardDeckId.toUpperCase())} · ${cardIndex + 1}/${cardQueue.length} · kutu ${card.box}</p>
+      <button type="button" class="flash-card ${cardFlipped ? "flipped" : ""}" id="flash">
+        <span class="flash-front">${escapeHtml(card.el)}</span>
+        <span class="flash-back">
+          <strong>${escapeHtml(card.tr)}</strong>
+          ${card.tip ? `<small>${escapeHtml(card.tip)}</small>` : ""}
+        </span>
+      </button>
+      <p class="meta sand-meta center">${cardFlipped ? "Bildin mi?" : "Çevirmek için dokun"}</p>
+      <div class="card-actions ${cardFlipped ? "" : "hidden"}">
+        <button class="btn btn-ghost" id="card-no">Tekrar</button>
+        <button class="btn btn-primary" id="card-yes">Biliyorum</button>
+      </div>
+    </section>`);
+
+    section.querySelector("#flash").addEventListener("click", () => {
+      cardFlipped = !cardFlipped;
+      render();
+    });
+    section.querySelector("#back-decks").addEventListener("click", () => {
+      cardDeckId = null;
+      render();
+    });
+    section.querySelector("#card-yes")?.addEventListener("click", () => {
+      Progress.reviewCard(cardDeckId, card.el, true);
+      cardIndex++;
+      cardFlipped = false;
+      render();
+    });
+    section.querySelector("#card-no")?.addEventListener("click", () => {
+      Progress.reviewCard(cardDeckId, card.el, false);
+      cardIndex++;
+      cardFlipped = false;
+      render();
     });
     return section;
   }
@@ -324,23 +544,36 @@ const App = (() => {
           <ul class="plain">${CURRICULUM.resources.map((r) => `<li><strong>${escapeHtml(r.title)}</strong> — ${escapeHtml(r.note)}</li>`).join("")}</ul>
         </article>
       </div>
+      <article class="mini-action yds-vocab">
+        <div>
+          <strong>YDS kelime destesi</strong>
+          <p>Akademik kalıplar ve sık kelimeler</p>
+        </div>
+        <button class="btn btn-ghost" id="yds-cards">Kart aç</button>
+      </article>
       <h3 class="section-title">YDS görevleri</h3>
       <ul class="task-list" id="yds-list"></ul>
     </section>`);
 
     const list = section.querySelector("#yds-list");
     ydsTasks.forEach(({ level, unit, task }) => list.appendChild(taskRow(level, unit, task)));
+    section.querySelector("#yds-cards").addEventListener("click", () => {
+      view = "cards";
+      startDeck("yds");
+      render();
+    });
     return section;
   }
 
   function renderProgress(state) {
     const stats = Progress.overallStats();
     const hours = (stats.totalMinutes / 60).toFixed(1);
+    const diag = state.lastDiagnostic;
     const section = el(`<section class="view progress-view">
       <div class="view-intro">
         <p class="eyebrow">İlerleme</p>
         <h1>Senin haritan</h1>
-        <p class="lede">Başlangıç: ${state.startDate || "—"} · Seri: ${stats.streak} · En uzun seri: ${stats.longestStreak}</p>
+        <p class="lede">Başlangıç: ${state.startDate || "—"} · Seri: ${stats.streak} · Kart: ${state.cardsReviewed || 0}</p>
       </div>
       <div class="stat-grid">
         <div class="stat"><span class="stat-n">${stats.pct}%</span><span class="stat-l">Genel tamamlanma</span></div>
@@ -348,6 +581,15 @@ const App = (() => {
         <div class="stat"><span class="stat-n">${hours}</span><span class="stat-l">Saat (işaretli)</span></div>
         <div class="stat"><span class="stat-n">${stats.streak}</span><span class="stat-l">Günlük seri</span></div>
       </div>
+      ${
+        diag
+          ? `<article class="info-panel diag-summary">
+              <h3>Son teşhis</h3>
+              <p>${diag.correct}/${diag.total} doğru · öneri: <strong>${escapeHtml((CURRICULUM.levels.find((l) => l.id === diag.levelId) || {}).code || diag.levelId)}</strong></p>
+            </article>`
+          : ""
+      }
+      <button class="btn btn-ghost sand-btn" id="rerun-diag">Teşhis sınavını yeniden çalıştır</button>
       <h3 class="section-title">Seviye kırılımı</h3>
       <ul class="break-list" id="break-list"></ul>
       <div class="danger-zone">
@@ -364,6 +606,13 @@ const App = (() => {
           <div class="progress-line"><span style="width:${ls.pct}%;background:${level.color}"></span></div>
         </li>`)
       );
+    });
+
+    section.querySelector("#rerun-diag").addEventListener("click", () => {
+      diagIndex = 0;
+      diagAnswers = [];
+      diagActive = true;
+      render();
     });
 
     section.querySelector("#reset-btn").addEventListener("click", () => {

@@ -12,7 +12,10 @@ const Progress = (() => {
     totalMinutes: 0,
     dailyMode: "standard",
     onboardingDone: false,
-    displayName: ""
+    displayName: "",
+    cards: {},
+    cardsReviewed: 0,
+    lastDiagnostic: null
   });
 
   function load() {
@@ -99,6 +102,35 @@ const Progress = (() => {
   function resetAll() {
     localStorage.removeItem(KEY);
     return defaultState();
+  }
+
+  function cardKey(deckId, el) {
+    return `${deckId}::${el}`;
+  }
+
+  function reviewCard(deckId, el, knew) {
+    const state = load();
+    const key = cardKey(deckId, el);
+    const prev = state.cards[key] || { box: 1, reviews: 0 };
+    if (knew) {
+      prev.box = Math.min(5, (prev.box || 1) + 1);
+    } else {
+      prev.box = 1;
+    }
+    prev.reviews = (prev.reviews || 0) + 1;
+    prev.last = todayStr();
+    state.cards[key] = prev;
+    state.cardsReviewed = (state.cardsReviewed || 0) + 1;
+    touchActivity(state);
+    save(state);
+    return state;
+  }
+
+  function saveDiagnostic(result) {
+    const state = load();
+    state.lastDiagnostic = { ...result, at: new Date().toISOString() };
+    save(state);
+    return state;
   }
 
   function levelStats(level) {
@@ -228,6 +260,9 @@ const Progress = (() => {
     todayPlan,
     unitStats,
     isLevelUnlocked,
-    todayStr
+    todayStr,
+    reviewCard,
+    saveDiagnostic,
+    cardKey
   };
 })();
