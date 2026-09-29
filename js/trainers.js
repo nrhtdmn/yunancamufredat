@@ -197,6 +197,70 @@ const TRAINERS = {
     "Μιλάω λίγα ελληνικά"
   ],
 
+  time: [
+    { tr: "Saat 1", el: "μία" },
+    { tr: "Saat 2", el: "δύο" },
+    { tr: "Saat 3", el: "τρεις" },
+    { tr: "Saat 4", el: "τέσσερις" },
+    { tr: "Saat 5", el: "πέντε" },
+    { tr: "Saat 6", el: "έξι" },
+    { tr: "Saat 7", el: "επτά" },
+    { tr: "Saat 8", el: "οκτώ" },
+    { tr: "Saat 9", el: "εννέα" },
+    { tr: "Saat 10", el: "δέκα" },
+    { tr: "Saat 11", el: "έντεκα" },
+    { tr: "Saat 12", el: "δώδεκα" },
+    { tr: "Yarım (buçuk)", el: "και μισή" },
+    { tr: "Çeyrek geçiyor", el: "και τέταρτο" },
+    { tr: "Çeyrek var", el: "παρά τέταρτο" }
+  ],
+
+  aorist: [
+    { base: "πάω", tr: "gitmek", aor: "πήγα" },
+    { base: "έρχομαι", tr: "gelmek", aor: "ήρθα" },
+    { base: "βλέπω", tr: "görmek", aor: "είδα" },
+    { base: "λέω", tr: "söylemek", aor: "είπα" },
+    { base: "τρώω", tr: "yemek", aor: "έφαγα" },
+    { base: "πίνω", tr: "içmek", aor: "ήπια" },
+    { base: "παίρνω", tr: "almak", aor: "πήρα" },
+    { base: "δίνω", tr: "vermek", aor: "έδωσα" },
+    { base: "βρίσκω", tr: "bulmak", aor: "βρήκα" },
+    { base: "μένω", tr: "kalmak", aor: "έμεινα" },
+    { base: "φεύγω", tr: "ayrılmak", aor: "έφυγα" },
+    { base: "γίνομαι", tr: "olmak/hâle gelmek", aor: "έγινα" }
+  ],
+
+  translate: [
+    { tr: "Su istiyorum", el: "Θέλω νερό" },
+    { tr: "Nasılsın?", el: "Τι κάνεις" },
+    { tr: "Anlamıyorum", el: "Δεν καταλαβαίνω" },
+    { tr: "Yarın gideceğim", el: "Θα πάω αύριο" },
+    { tr: "Adım Nurhat", el: "Με λένε Νουρχάτ" },
+    { tr: "Teşekkür ederim", el: "Ευχαριστώ" },
+    { tr: "Neredesin?", el: "Πού είσαι" },
+    { tr: "Kitap okudum", el: "Διάβασα ένα βιβλίο" },
+    { tr: "Kahve içer misin?", el: "Θέλεις καφέ" },
+    { tr: "Yunanca öğreniyorum", el: "Μαθαίνω ελληνικά" }
+  ],
+
+  badges: [
+    { id: "first_task", title: "İlk adım", desc: "İlk görevi tamamla", check: (s) => Object.keys(s.completed || {}).length >= 1 },
+    { id: "streak3", title: "3 gün seri", desc: "3 gün üst üste aktif ol", check: (s) => (s.streak || 0) >= 3 },
+    { id: "streak7", title: "Haftalık ateş", desc: "7 gün seri", check: (s) => (s.streak || 0) >= 7 },
+    { id: "cards50", title: "Kart ustası", desc: "50 kart tekrarı", check: (s) => (s.cardsReviewed || 0) >= 50 },
+    { id: "cloze10", title: "Cloze avcısı", desc: "10 cloze çöz", check: (s) => ((s.drillStats || {}).clozeTotal || 0) >= 10 },
+    { id: "a1_half", title: "A1 yarı", desc: "A1 seviyesinde %50+", check: (s) => {
+      if (typeof CURRICULUM === "undefined") return false;
+      const level = CURRICULUM.levels.find((l) => l.id === "a1");
+      if (!level) return false;
+      let t = 0, d = 0;
+      level.units.forEach((u) => u.tasks.forEach((task) => { t++; if (s.completed[task.id]) d++; }));
+      return t && d / t >= 0.5;
+    }},
+    { id: "trainer20", title: "Antrenör", desc: "20 antrenman turu", check: (s) => Object.values(s.trainerStats || {}).reduce((a, b) => a + b, 0) >= 20 },
+    { id: "challenge", title: "Günlük savaşçı", desc: "Bir challenge bitir", check: (s) => (s.challengesWon || 0) >= 1 }
+  ],
+
   extraVocab: {
     a0: [
       { el: "μητέρα", tr: "anne", tip: "η μητέρα" },

@@ -20,7 +20,9 @@ const Progress = (() => {
     drillStats: { clozeCorrect: 0, clozeTotal: 0, readingCorrect: 0, readingTotal: 0 },
     speakDone: {},
     studyLog: {},
-    trainerStats: { alpha: 0, verb: 0, gender: 0, aspect: 0, number: 0, dictation: 0 }
+    trainerStats: { alpha: 0, verb: 0, gender: 0, aspect: 0, number: 0, dictation: 0, time: 0, aorist: 0, translate: 0, challenge: 0 },
+    challengesWon: 0,
+    unlockedBadges: {}
   });
 
   function load() {
@@ -76,6 +78,7 @@ const Progress = (() => {
       touchActivity(state);
     }
     save(state);
+    refreshBadges();
     return state;
   }
 
@@ -224,6 +227,30 @@ const Progress = (() => {
       });
     }
     return days;
+  }
+
+  function winChallenge() {
+    const state = load();
+    state.challengesWon = (state.challengesWon || 0) + 1;
+    touchActivity(state);
+    save(state);
+    refreshBadges();
+    return state;
+  }
+
+  function refreshBadges() {
+    if (typeof TRAINERS === "undefined" || !TRAINERS.badges) return load();
+    const state = load();
+    state.unlockedBadges = state.unlockedBadges || {};
+    let changed = false;
+    TRAINERS.badges.forEach((b) => {
+      if (!state.unlockedBadges[b.id] && b.check(state)) {
+        state.unlockedBadges[b.id] = new Date().toISOString();
+        changed = true;
+      }
+    });
+    if (changed) save(state);
+    return state;
   }
 
   function exportData() {
@@ -376,6 +403,8 @@ const Progress = (() => {
     logStudyMinutes,
     bumpTrainer,
     weekActivity,
+    winChallenge,
+    refreshBadges,
     exportData,
     importData
   };

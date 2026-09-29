@@ -18,6 +18,8 @@ const App = (() => {
   let trainerQ = null;
   let trainerScore = { ok: 0, n: 0 };
   let trainerFeedback = null;
+  let challengeQueue = [];
+  let challengeIndex = 0;
 
   function speakGreek(text) {
     if (!window.speechSynthesis) return;
@@ -494,6 +496,14 @@ const App = (() => {
     trainerMode = mode;
     trainerScore = { ok: 0, n: 0 };
     trainerFeedback = null;
+    challengeQueue = [];
+    challengeIndex = 0;
+    if (mode === "challenge") {
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate"];
+      challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
+      trainerQ = challengeQueue[0];
+      return;
+    }
     trainerQ = nextTrainerQuestion(mode);
   }
 
@@ -503,6 +513,7 @@ const App = (() => {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/ς/g, "σ")
+      .replace(/[;？?!.…,·'’"“”]/g, "")
       .replace(/[^a-zα-ωίϊΐύϋΰέάόήώ\s]/gi, "")
       .replace(/\s+/g, " ")
       .trim();
@@ -560,6 +571,44 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "time") {
+      const item = TRAINERS.time[Math.floor(Math.random() * TRAINERS.time.length)];
+      const wrong = shuffle(TRAINERS.time.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "time",
+        prompt: item.tr,
+        sub: "Yunanca saat ifadesi?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "aorist") {
+      const item = TRAINERS.aorist[Math.floor(Math.random() * TRAINERS.aorist.length)];
+      const wrong = shuffle(TRAINERS.aorist.filter((x) => x.aor !== item.aor)).slice(0, 3).map((x) => x.aor);
+      return {
+        kind: "aorist",
+        prompt: `${item.base} (${item.tr})`,
+        sub: "Aorist (εγώ) formu?",
+        answer: item.aor,
+        options: shuffle([item.aor, ...wrong]),
+        speak: item.aor,
+        input: false
+      };
+    }
+    if (mode === "translate") {
+      const item = TRAINERS.translate[Math.floor(Math.random() * TRAINERS.translate.length)];
+      return {
+        kind: "translate",
+        prompt: item.tr,
+        sub: "Yunancaya çevir (yaklaşık yazım kabul)",
+        answer: item.el,
+        options: null,
+        speak: item.el,
+        input: true
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -594,15 +643,44 @@ const App = (() => {
     gender: "Madde (ο/η/το)",
     aspect: "Aorist / Imperfect",
     number: "Sayılar",
-    dictation: "Dikte"
+    dictation: "Dikte",
+    time: "Saatler",
+    aorist: "Düzensiz aorist",
+    translate: "TR → EL",
+    challenge: "Günlük challenge"
   };
 
   function renderTrainer() {
-    if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode);
-    const title = TRAINER_TITLES[trainerMode] || "Antrenman";
+    if (trainerMode === "challenge" && challengeIndex >= challengeQueue.length) {
+      Progress.bumpTrainer("challenge");
+      Progress.winChallenge();
+      const w = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card">
+        <p class="brand-mark">Challenge</p>
+        <h1>${trainerScore.ok}/10</h1>
+        <p class="lede">${trainerScore.ok >= 7 ? "Güçlü tur. Devam." : "Zayıf alanlara dön: Kart + antrenman."}</p>
+        <button class="btn btn-primary" id="train-exit">Bugün’e dön</button>
+        <button class="btn btn-ghost" id="again">Tekrar</button>
+      </div></div>`);
+      w.querySelector("#train-exit").onclick = () => {
+        trainerMode = null;
+        view = "today";
+        render();
+      };
+      w.querySelector("#again").onclick = () => {
+        startTrainer("challenge");
+        render();
+      };
+      return w;
+    }
+
+    if (!trainerQ) trainerQ = nextTrainerQuestion(trainerMode === "challenge" ? "verb" : trainerMode);
+    const title =
+      trainerMode === "challenge"
+        ? `Challenge ${challengeIndex + 1}/10`
+        : TRAINER_TITLES[trainerMode] || "Antrenman";
     const wrap = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card diag-card">
       <p class="eyebrow">${escapeHtml(title)} · ${trainerScore.ok}/${trainerScore.n}</p>
-      <h1 class="diag-q ${trainerMode === "number" || trainerMode === "aspect" ? "" : "greek-line"}">${escapeHtml(trainerQ.prompt)}</h1>
+      <h1 class="diag-q ${trainerQ.kind === "number" || trainerQ.kind === "aspect" || trainerQ.kind === "translate" || trainerQ.kind === "time" ? "" : "greek-line"}">${escapeHtml(trainerQ.prompt)}</h1>
       <p class="lede center-soft">${escapeHtml(trainerQ.sub)}</p>
       ${trainerQ.hint && trainerFeedback ? `<p class="meta center-soft">${escapeHtml(trainerQ.hint)}</p>` : ""}
       <button type="button" class="btn btn-ghost" id="say-q">♪ Dinle</button>
@@ -619,7 +697,9 @@ const App = (() => {
     const finish = (ok, msg) => {
       trainerScore.n++;
       if (ok) trainerScore.ok++;
-      Progress.bumpTrainer(trainerMode);
+      if (trainerMode !== "challenge") Progress.bumpTrainer(trainerMode);
+      else Progress.bumpTrainer(trainerQ.kind);
+      Progress.refreshBadges();
       trainerFeedback = { ok, msg };
       render();
     };
@@ -649,13 +729,19 @@ const App = (() => {
 
     wrap.querySelector("#next")?.addEventListener("click", () => {
       trainerFeedback = null;
-      trainerQ = nextTrainerQuestion(trainerMode);
+      if (trainerMode === "challenge") {
+        challengeIndex++;
+        trainerQ = challengeQueue[challengeIndex] || null;
+      } else {
+        trainerQ = nextTrainerQuestion(trainerMode);
+      }
       render();
     });
     wrap.querySelector("#train-exit").addEventListener("click", () => {
       trainerMode = null;
       trainerQ = null;
       trainerFeedback = null;
+      challengeQueue = [];
       view = "today";
       render();
     });
@@ -664,13 +750,17 @@ const App = (() => {
 
   function trainerButtons(ts) {
     return `
+      <button type="button" class="btn btn-primary challenge-btn" data-train="challenge">Günlük challenge (10 soru)</button>
       <div class="quick-train multi">
         <button type="button" class="btn btn-ghost sand-btn" data-train="alpha">Alfabe (${ts.alpha || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="verb">Fiil (${ts.verb || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="gender">Madde (${ts.gender || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="aspect">Aspect (${ts.aspect || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="aorist">Aorist (${ts.aorist || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="number">Sayı (${ts.number || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="time">Saat (${ts.time || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="dictation">Dikte (${ts.dictation || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="translate">TR→EL (${ts.translate || 0})</button>
       </div>`;
   }
 
@@ -1042,6 +1132,10 @@ const App = (() => {
       }
       <button class="btn btn-ghost sand-btn" id="rerun-diag">Teşhis sınavını yeniden çalıştır</button>
       <article class="info-panel journal-panel">
+        <h3>Rozetler</h3>
+        <ul class="badge-grid" id="badge-grid"></ul>
+      </article>
+      <article class="info-panel journal-panel">
         <h3>Yedekle / Geri yükle</h3>
         <p class="hint-inline">İlerlemeyi JSON olarak indir veya başka cihazdan yükle.</p>
         <div class="backup-row">
@@ -1072,6 +1166,15 @@ const App = (() => {
     </section>`);
 
     const jlist = section.querySelector("#journal-list");
+    const badgeGrid = section.querySelector("#badge-grid");
+    Progress.refreshBadges();
+    const unlocked = Progress.load().unlockedBadges || {};
+    (TRAINERS.badges || []).forEach((b) => {
+      const on = !!unlocked[b.id];
+      badgeGrid.appendChild(
+        el(`<li class="${on ? "on" : ""}"><strong>${escapeHtml(b.title)}</strong><span>${escapeHtml(b.desc)}</span></li>`)
+      );
+    });
     journal.slice(0, 20).forEach((j) => {
       const li = el(`<li><span class="j-tag">${escapeHtml(j.tag)}</span><span class="j-text">${escapeHtml(j.text)}</span><button type="button" data-del="${j.id}" aria-label="Sil">×</button></li>`);
       li.querySelector("button").addEventListener("click", () => {
@@ -1143,6 +1246,7 @@ const App = (() => {
       window.speechSynthesis.getVoices();
       window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     }
+    Progress.refreshBadges();
     render();
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(() => {});
