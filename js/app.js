@@ -563,7 +563,7 @@ const App = (() => {
     challengeQueue = [];
     challengeIndex = 0;
     if (mode === "challenge") {
-      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months", "genitive", "opposite", "ordinal", "direction", "adjective", "question", "connector", "frequency", "emotion"];
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months", "genitive", "opposite", "ordinal", "direction", "adjective", "question", "connector", "frequency", "emotion", "plural", "relative", "restaurant", "case"];
       challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
       trainerQ = challengeQueue[0];
       return;
@@ -598,7 +598,7 @@ const App = (() => {
       return;
     }
     if (mode === "flash5") {
-      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle", "opposite", "ordinal", "direction", "question", "connector", "emotion"];
+      const modes = ["gender", "aorist", "number", "prep", "translate", "adjective", "weekdays", "polite", "particle", "opposite", "ordinal", "direction", "question", "connector", "emotion", "plural", "relative", "restaurant"];
       challengeQueue = shuffle(modes).slice(0, 5).map((m) => nextTrainerQuestion(m));
       challengeIndex = 0;
       trainerMode = "flash5";
@@ -1129,6 +1129,76 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "plural") {
+      const item = EXTRAS5.plurals[Math.floor(Math.random() * EXTRAS5.plurals.length)];
+      const wrong = shuffle(EXTRAS5.plurals.filter((x) => x.pl !== item.pl)).slice(0, 3).map((x) => x.pl);
+      return {
+        kind: "plural",
+        prompt: item.sg,
+        sub: `Çoğul hali? (${item.tr})`,
+        answer: item.pl,
+        options: shuffle([item.pl, ...wrong]),
+        speak: item.pl,
+        input: false
+      };
+    }
+    if (mode === "falsefriend") {
+      const item = EXTRAS5.falseFriends[Math.floor(Math.random() * EXTRAS5.falseFriends.length)];
+      const wrong = shuffle(EXTRAS5.falseFriends.filter((x) => x.tr !== item.tr)).slice(0, 3).map((x) => x.tr);
+      return {
+        kind: "falsefriend",
+        prompt: item.el,
+        // tuzaga dusme -> proper Turkish
+    sub: "Gerçek anlamı? (tuzağa düşme)",
+        answer: item.tr,
+        options: shuffle([item.tr, ...wrong]),
+        hint: item.trap || item.tip,
+        speak: item.el.split(" / ")[0],
+        input: false
+      };
+    }
+    if (mode === "relative") {
+      const item = EXTRAS5.relative[Math.floor(Math.random() * EXTRAS5.relative.length)];
+      const wrong = shuffle(EXTRAS5.relative.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "relative",
+        prompt: item.tr,
+        sub: "που ile göreli cümle?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "restaurant") {
+      const item = EXTRAS5.restaurant[Math.floor(Math.random() * EXTRAS5.restaurant.length)];
+      const wrong = shuffle(EXTRAS5.restaurant.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "restaurant",
+        prompt: item.tr,
+        sub: "Restoran ifadesi?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "case") {
+      const item = EXTRAS5.cases[Math.floor(Math.random() * EXTRAS5.cases.length)];
+      const wrong = shuffle(EXTRAS5.cases.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "case",
+        prompt: item.tr,
+        sub: "Doğru durum / yapı?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -1194,6 +1264,11 @@ const App = (() => {
     frequency: "Sıklık",
     emotion: "Duygu",
     body: "Vücut",
+    plural: "Çoğul",
+    falsefriend: "False friend",
+    relative: "που göreli",
+    restaurant: "Restoran",
+    case: "Durum / edat",
     scramble: "Cümle kur",
     exam: "Mini sınav",
     flash5: "Hızlı 5",
@@ -1692,8 +1767,8 @@ const App = (() => {
         <div class="quick-train multi">
           ${btn("alpha", "Alfabe")}${btn("gender", "Madde")}${btn("number", "Sayı")}${btn("bignum", "100+")}${btn("ordinal", "Sıra")}${btn("weekdays", "Gün")}${btn("months", "Ay")}${btn("time", "Saat")}${btn("question", "Soru")}${btn("match", "Eşleştir")}
           ${btn("verb", "Fiil")}${btn("aspect", "Aspect")}${btn("aorist", "Aorist")}${btn("perfect", "Perfect")}${btn("imperative", "Emir")}${btn("subjunctive", "να")}${btn("particle", "θα/να")}${btn("reflexive", "Dönüşlü")}
-          ${btn("pronoun", "Zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("opposite", "Zıt")}${btn("synonym", "Eşanlam")}${btn("connector", "Bağlaç")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
-          ${btn("direction", "Yön")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
+          ${btn("pronoun", "Zamir")}${btn("prep", "Edat")}${btn("genitive", "Genitif")}${btn("case", "Durum")}${btn("adjective", "Sıfat")}${btn("compare", "Karşılaştır")}${btn("opposite", "Zıt")}${btn("synonym", "Eşanlam")}${btn("connector", "Bağlaç")}${btn("relative", "που")}${btn("plural", "Çoğul")}${btn("conditional", "αν")}${btn("passive", "Pasif")}${btn("polite", "Nazik")}${btn("collocation", "Kalıp")}
+          ${btn("direction", "Yön")}${btn("frequency", "Sıklık")}${btn("emotion", "Duygu")}${btn("body", "Vücut")}${btn("restaurant", "Restoran")}${btn("falsefriend", "False friend")}${btn("fixerror", "Düzelt")}${btn("scramble", "Cümle")}${btn("dictation", "Dikte")}${btn("listen", "Dinle")}${btn("translate", "TR→EL")}
           <button type="button" class="btn btn-ghost sand-btn" data-train="dialogue">Diyalog</button>
           <button type="button" class="btn btn-ghost sand-btn" data-train="write">Yazma</button>
         </div>
@@ -1748,7 +1823,13 @@ const App = (() => {
                                       ? "Okul"
                                       : id === "tech"
                                         ? "Teknoloji"
-                                        : id.toUpperCase();
+                                        : id === "nature"
+                                          ? "Doğa"
+                                          : id === "sports"
+                                            ? "Spor"
+                                            : id === "money"
+                                              ? "Para"
+                                              : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);
