@@ -13,6 +13,7 @@ const Progress = (() => {
     dailyMode: "standard",
     onboardingDone: false,
     displayName: "",
+    dailyGoalMin: 45,
     cards: {},
     cardsReviewed: 0,
     lastDiagnostic: null,
@@ -90,13 +91,21 @@ const Progress = (() => {
     return state;
   }
 
-  function completeOnboarding({ levelId, name, dailyMode }) {
+  function completeOnboarding({ levelId, name, dailyMode, dailyGoalMin }) {
     const state = load();
     state.onboardingDone = true;
     state.currentLevelId = levelId;
     state.displayName = name || "";
     state.dailyMode = dailyMode || "standard";
+    if (dailyGoalMin) state.dailyGoalMin = Number(dailyGoalMin) || 45;
     state.startDate = todayStr();
+    save(state);
+    return state;
+  }
+
+  function setDailyGoal(mins) {
+    const state = load();
+    state.dailyGoalMin = Math.max(10, Math.min(300, Number(mins) || 45));
     save(state);
     return state;
   }
@@ -396,6 +405,7 @@ const Progress = (() => {
     setLevel,
     completeOnboarding,
     setDailyMode,
+    setDailyGoal,
     resetAll,
     levelStats,
     overallStats,

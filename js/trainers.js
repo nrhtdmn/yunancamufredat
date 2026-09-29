@@ -321,8 +321,53 @@ const TRAINERS = {
       { el: "χρονόμετρο", tr: "kronometre", tip: "" },
       { el: "επανάληψη", tr: "tekrar", tip: "" },
       { el: "στρατηγική", tr: "strateji", tip: "" }
+    ],
+    friends: [
+      { el: "λίγο", tr: "az / biraz (NOT: illegal değil)", tip: "false friend uyarı" },
+      { el: "μαγαζί", tr: "dükkân", tip: "magaza benzeri" },
+      { el: "κάρτα", tr: "kart", tip: "" },
+      { el: "σάλτσα", tr: "sos", tip: "" },
+      { el: "τσάντα", tr: "çanta", tip: "" },
+      { el: "πόρτα", tr: "kapı", tip: "porte değil kapı" },
+      { el: "κάτι", tr: "bir şey", tip: "" },
+      { el: "τίποτα", tr: "hiçbir şey", tip: "" },
+      { el: "απλά", tr: "sadece / basitçe", tip: "" },
+      { el: "τέλος", tr: "son", tip: "telos" }
     ]
   },
+
+  compare: [
+    { tr: "daha büyük", el: "πιο μεγάλος", tip: "πιο + sıfat" },
+    { tr: "en büyük", el: "ο πιο μεγάλος", tip: "ο/η/το πιο…" },
+    { tr: "daha iyi", el: "καλύτερος", tip: "düzensiz" },
+    { tr: "daha kötü", el: "χειρότερος", tip: "düzensiz" },
+    { tr: "daha çok", el: "περισσότερος", tip: "" },
+    { tr: "daha az", el: "λιγότερος", tip: "" },
+    { tr: "kadar … (eşitlik)", el: "τόσο … όσο", tip: "τόσο ψηλός όσο" },
+    { tr: "daha hızlı", el: "πιο γρήγορος", tip: "" }
+  ],
+
+  subjunctive: [
+    { tr: "Bir kez yazmak istiyorum", options: ["να γράψω", "να γράφω"], a: 0, tip: "aorist subjunctive = bir kez / tamamlanmış" },
+    { tr: "Sürekli yazmak istiyorum", options: ["να γράφω", "να γράψω"], a: 0, tip: "present subjunctive = süre/alışkanlık" },
+    { tr: "Yarın gelmeni istiyorum (bir kez)", options: ["να έρθεις", "να έρχεσαι"], a: 0, tip: "να έρθεις" },
+    { tr: "Daha sık gelmeni istiyorum", options: ["να έρχεσαι", "να έρθεις"], a: 0, tip: "να έρχεσαι" },
+    { tr: "Kitabı bitirmelisin", options: ["να τελειώσεις", "να τελειώνεις"], a: 0, tip: "bir kez bitir" },
+    { tr: "Her gün spor yapmalısın", options: ["να κάνεις", "να κάνεις μία φορά μόνο"], a: 0, tip: "alışkanlık → present" }
+  ],
+
+  collocations: [
+    { tr: "karar vermek", el: "παίρνω απόφαση", tip: "" },
+    { tr: "dikkat etmek", el: "δίνω προσοχή", tip: "" },
+    { tr: "söz vermek", el: "δίνω υπόσχεση", tip: "" },
+    { tr: "fotoğraf çekmek", el: "βγάζω φωτογραφία", tip: "" },
+    { tr: "duş almak", el: "κάνω μπάνιο", tip: "" },
+    { tr: "hata yapmak", el: "κάνω λάθος", tip: "" },
+    { tr: "soru sormak", el: "κάνω ερώτηση", tip: "" },
+    { tr: "seyahat etmek", el: "κάνω ταξίδι", tip: "" },
+    { tr: "telefonda konuşmak", el: "μιλάω στο τηλέφωνο", tip: "" },
+    { tr: "dikkate almak", el: "λαμβάνω υπόψη", tip: "YDS" }
+  ],
 
   extraVocab: {
     a0: [

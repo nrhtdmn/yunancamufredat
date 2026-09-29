@@ -149,6 +149,15 @@ const App = (() => {
                 .join("")}
             </select>
           </label>
+          <label>
+            <span>Günlük dakika hedefi</span>
+            <select name="goal">
+              <option value="25">25 dk</option>
+              <option value="45" selected>45 dk</option>
+              <option value="60">60 dk</option>
+              <option value="90">90 dk</option>
+            </select>
+          </label>
           <button type="submit" class="btn btn-primary">Yolculuğu başlat</button>
           <button type="button" class="btn btn-ghost" id="start-diag">Önce teşhis sınavı (16 soru)</button>
         </form>
@@ -161,7 +170,8 @@ const App = (() => {
       Progress.completeOnboarding({
         name: fd.get("name"),
         levelId: fd.get("level"),
-        dailyMode: fd.get("mode")
+        dailyMode: fd.get("mode"),
+        dailyGoalMin: fd.get("goal")
       });
       view = "today";
       render();
@@ -288,13 +298,19 @@ const App = (() => {
     const dueHint = CONTENT.decks[deckId] ? CONTENT.decks[deckId].length : 0;
 
     const todayMins = (state.studyLog || {})[Progress.todayStr()] || 0;
+    const goal = state.dailyGoalMin || 45;
+    const goalPct = Math.min(100, Math.round((todayMins / goal) * 100));
     const week = Progress.weekActivity();
     const ts = state.trainerStats || {};
     const section = el(`<section class="view today-view">
       <div class="hero-today">
         <p class="eyebrow">Bugünün emri</p>
         <h1>Merhaba${name}</h1>
-        <p class="lede">Aktif seviye: <strong>${escapeHtml(level.code)} · ${escapeHtml(level.title)}</strong> — ${escapeHtml(plan.label)} · bugün ${todayMins} dk</p>
+        <p class="lede">Aktif seviye: <strong>${escapeHtml(level.code)} · ${escapeHtml(level.title)}</strong> — ${escapeHtml(plan.label)}</p>
+        <div class="goal-box">
+          <div class="goal-top"><span>Günlük hedef</span><span>${todayMins}/${goal} dk</span></div>
+          <div class="progress-line lg"><span style="width:${goalPct}%"></span></div>
+        </div>
       </div>
       <div class="week-strip" aria-label="Son 7 gün">
         ${week
@@ -338,6 +354,15 @@ const App = (() => {
           <input name="mins" type="number" min="5" max="300" step="5" value="25" aria-label="Dakika" />
           <button type="submit" class="btn btn-ghost">+ dk</button>
         </form>
+      </article>
+      <article class="mini-action">
+        <div>
+          <strong>Hedef ayarla</strong>
+          <p>Günlük dakika hedefi</p>
+        </div>
+        <select id="goal-select" class="goal-select">
+          ${[25, 45, 60, 90].map((g) => `<option value="${g}" ${g === goal ? "selected" : ""}>${g} dk</option>`).join("")}
+        </select>
       </article>
       ${trainerButtons(ts)}
       <div class="section-head">
@@ -402,6 +427,11 @@ const App = (() => {
       e.preventDefault();
       const mins = Number(new FormData(e.target).get("mins")) || 0;
       Progress.logStudyMinutes(mins);
+      render();
+    });
+
+    section.querySelector("#goal-select")?.addEventListener("change", (e) => {
+      Progress.setDailyGoal(e.target.value);
       render();
     });
 
@@ -583,7 +613,7 @@ const App = (() => {
     challengeQueue = [];
     challengeIndex = 0;
     if (mode === "challenge") {
-      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle"];
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation"];
       challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
       trainerQ = challengeQueue[0];
       return;
@@ -766,6 +796,47 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "compare") {
+      const item = TRAINERS.compare[Math.floor(Math.random() * TRAINERS.compare.length)];
+      const wrong = shuffle(TRAINERS.compare.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "compare",
+        prompt: item.tr,
+        sub: "Yunanca karşılaştırma?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "subjunctive") {
+      const item = TRAINERS.subjunctive[Math.floor(Math.random() * TRAINERS.subjunctive.length)];
+      return {
+        kind: "subjunctive",
+        prompt: item.tr,
+        sub: "να + hangi aspect?",
+        answer: item.options[item.a],
+        options: item.options,
+        hint: item.tip,
+        speak: item.options[item.a],
+        input: false
+      };
+    }
+    if (mode === "collocation") {
+      const item = TRAINERS.collocations[Math.floor(Math.random() * TRAINERS.collocations.length)];
+      const wrong = shuffle(TRAINERS.collocations.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "collocation",
+        prompt: item.tr,
+        sub: "Doğal kalıp?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -809,6 +880,9 @@ const App = (() => {
     pronoun: "Zamirler",
     particle: "θα / να / ας",
     passive: "Pasif",
+    compare: "Karşılaştırma",
+    subjunctive: "να aspect",
+    collocation: "Kolokasyon",
     dialogue: "Diyalog",
     listen: "Dinle-anla",
     write: "Yazma",
@@ -1059,6 +1133,9 @@ const App = (() => {
         <button type="button" class="btn btn-ghost sand-btn" data-train="pronoun">Zamir (${ts.pronoun || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="particle">θα/να (${ts.particle || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="passive">Pasif (${ts.passive || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="compare">Karşılaştır (${ts.compare || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="subjunctive">να aspect (${ts.subjunctive || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="collocation">Kalıp (${ts.collocation || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="prep">Edat (${ts.prep || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="conditional">αν (${ts.conditional || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="number">Sayı (${ts.number || 0})</button>
@@ -1097,7 +1174,9 @@ const App = (() => {
                 ? "Seyahat"
                 : id === "exam"
                   ? "Sınav"
-                  : id.toUpperCase();
+                  : id === "friends"
+                    ? "False friends"
+                    : id.toUpperCase();
         const btn = el(`<li><button class="deck-btn" data-deck="${id}"><span class="deck-code">${label}</span><span>${n} kart</span></button></li>`);
         btn.querySelector("button").addEventListener("click", () => {
           startDeck(id);
@@ -1563,10 +1642,43 @@ const App = (() => {
       window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     }
     Progress.refreshBadges();
+    if (!document.getElementById("install-bar")) {
+      document.body.appendChild(renderInstallBar());
+    }
+    setupInstallPrompt();
     render();
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(() => {});
     }
+  }
+
+  let deferredInstall = null;
+  function setupInstallPrompt() {
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstall = e;
+      const bar = document.getElementById("install-bar");
+      if (bar) bar.hidden = false;
+    });
+  }
+
+  function renderInstallBar() {
+    const bar = el(`<div class="install-bar" id="install-bar" hidden>
+      <span>Οδηγός’u ana ekrana ekle</span>
+      <button type="button" class="btn btn-primary" id="install-btn">Kur</button>
+      <button type="button" class="btn btn-ghost" id="install-x" aria-label="Kapat">×</button>
+    </div>`);
+    bar.querySelector("#install-btn").addEventListener("click", async () => {
+      if (!deferredInstall) return;
+      deferredInstall.prompt();
+      await deferredInstall.userChoice;
+      deferredInstall = null;
+      bar.hidden = true;
+    });
+    bar.querySelector("#install-x").addEventListener("click", () => {
+      bar.hidden = true;
+    });
+    return bar;
   }
 
   return { init };
