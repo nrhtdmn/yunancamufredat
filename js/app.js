@@ -20,6 +20,8 @@ const App = (() => {
   let trainerFeedback = null;
   let challengeQueue = [];
   let challengeIndex = 0;
+  let focusTimer = null;
+  let focusLeft = 0;
 
   function attachGreekKeyboard(form, inputName) {
     const input = form.querySelector(`[name="${inputName}"]`);
@@ -435,6 +437,31 @@ const App = (() => {
       render();
     });
 
+    section.querySelector("#focus-btn")?.addEventListener("click", () => {
+      if (focusTimer) {
+        clearInterval(focusTimer);
+        focusTimer = null;
+        focusLeft = 0;
+        render();
+        return;
+      }
+      focusLeft = 25 * 60;
+      focusTimer = setInterval(() => {
+        focusLeft--;
+        const btn = document.getElementById("focus-btn");
+        const p = btn && btn.parentElement && btn.parentElement.querySelector("p");
+        if (p) p.textContent = focusLeft > 0 ? focusLeft + " sn kaldı" : "Bitti";
+        if (focusLeft <= 0) {
+          clearInterval(focusTimer);
+          focusTimer = null;
+          Progress.logStudyMinutes(25);
+          alert("25 dk odak tamam. Süre eklendi.");
+          render();
+        }
+      }, 1000);
+      render();
+    });
+
     section.querySelectorAll("[data-train]").forEach((btn) => {
       btn.addEventListener("click", () => {
         startTrainer(btn.dataset.train);
@@ -613,7 +640,7 @@ const App = (() => {
     challengeQueue = [];
     challengeIndex = 0;
     if (mode === "challenge") {
-      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation"];
+      const modes = ["gender", "aspect", "number", "verb", "aorist", "time", "alpha", "translate", "prep", "conditional", "pronoun", "particle", "compare", "subjunctive", "collocation", "imperative", "perfect", "months"];
       challengeQueue = shuffle(modes.concat(modes)).slice(0, 10).map((m) => nextTrainerQuestion(m));
       trainerQ = challengeQueue[0];
       return;
@@ -624,6 +651,27 @@ const App = (() => {
     }
     if (mode === "dialogue" || mode === "listen") {
       trainerQ = null;
+      return;
+    }
+    if (mode === "review") {
+      const wrongs = Progress.load().wrongQueue || [];
+      if (!wrongs.length) {
+        trainerQ = { kind: "review", empty: true };
+        return;
+      }
+      challengeQueue = shuffle(wrongs.slice());
+      challengeIndex = 0;
+      const w = challengeQueue[0];
+      trainerQ = {
+        kind: "review",
+        prompt: w.prompt,
+        sub: `(${w.kind}) Doğru cevabı yaz`,
+        answer: w.answer,
+        options: null,
+        speak: w.answer,
+        input: true,
+        wrongId: w.id
+      };
       return;
     }
     trainerQ = nextTrainerQuestion(mode);
@@ -837,6 +885,47 @@ const App = (() => {
         input: false
       };
     }
+    if (mode === "imperative") {
+      const item = TRAINERS.imperative[Math.floor(Math.random() * TRAINERS.imperative.length)];
+      const wrong = shuffle(TRAINERS.imperative.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "imperative",
+        prompt: item.tr,
+        sub: "Emir kipi?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "perfect") {
+      const item = TRAINERS.perfect[Math.floor(Math.random() * TRAINERS.perfect.length)];
+      const wrong = shuffle(TRAINERS.perfect.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "perfect",
+        prompt: item.tr,
+        sub: "Παρακείμενος?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        hint: item.tip,
+        speak: item.el,
+        input: false
+      };
+    }
+    if (mode === "months") {
+      const item = TRAINERS.months[Math.floor(Math.random() * TRAINERS.months.length)];
+      const wrong = shuffle(TRAINERS.months.filter((x) => x.el !== item.el)).slice(0, 3).map((x) => x.el);
+      return {
+        kind: "months",
+        prompt: item.tr,
+        sub: "Yunancası?",
+        answer: item.el,
+        options: shuffle([item.el, ...wrong]),
+        speak: item.el,
+        input: false
+      };
+    }
     if (mode === "dictation") {
       const phrase = TRAINERS.dictation[Math.floor(Math.random() * TRAINERS.dictation.length)];
       return {
@@ -883,6 +972,10 @@ const App = (() => {
     compare: "Karşılaştırma",
     subjunctive: "να aspect",
     collocation: "Kolokasyon",
+    imperative: "Emir kipi",
+    perfect: "Perfect",
+    months: "Ay / mevsim",
+    review: "Yanlış tekrarı",
     dialogue: "Diyalog",
     listen: "Dinle-anla",
     write: "Yazma",
@@ -893,6 +986,19 @@ const App = (() => {
     if (trainerMode === "write") return renderWritingStudio();
     if (trainerMode === "dialogue") return renderDialogueStudio();
     if (trainerMode === "listen") return renderListenQuiz();
+    if (trainerQ && trainerQ.empty) {
+      const w = el(`<div class="onboard"><div class="onboard-bg"></div><div class="onboard-card">
+        <p class="brand-mark">Yanlış tekrarı</p>
+        <p class="lede">Kuyruk boş. Antrenmanda yanlış yaptıkça buraya düşer.</p>
+        <button class="btn btn-primary" id="train-exit">Bugün’e dön</button>
+      </div></div>`);
+      w.querySelector("#train-exit").onclick = () => {
+        trainerMode = null;
+        view = "today";
+        render();
+      };
+      return w;
+    }
 
     if (trainerMode === "challenge" && challengeIndex >= challengeQueue.length) {
       Progress.bumpTrainer("challenge");
@@ -942,6 +1048,15 @@ const App = (() => {
       if (ok) trainerScore.ok++;
       if (trainerMode !== "challenge") Progress.bumpTrainer(trainerMode);
       else Progress.bumpTrainer(trainerQ.kind);
+      if (!ok) {
+        Progress.pushWrong({
+          prompt: trainerQ.prompt,
+          answer: trainerQ.answer,
+          kind: trainerQ.kind || trainerMode
+        });
+      } else if (trainerMode === "review" && trainerQ.wrongId) {
+        Progress.popWrong(trainerQ.wrongId);
+      }
       Progress.refreshBadges();
       trainerFeedback = { ok, msg };
       render();
@@ -976,6 +1091,23 @@ const App = (() => {
       if (trainerMode === "challenge") {
         challengeIndex++;
         trainerQ = challengeQueue[challengeIndex] || null;
+      } else if (trainerMode === "review") {
+        challengeIndex++;
+        const w = challengeQueue[challengeIndex];
+        if (!w) {
+          trainerQ = { kind: "review", empty: true };
+        } else {
+          trainerQ = {
+            kind: "review",
+            prompt: w.prompt,
+            sub: `(${w.kind}) Doğru cevap?`,
+            answer: w.answer,
+            options: null,
+            speak: w.answer,
+            input: true,
+            wrongId: w.id
+          };
+        }
       } else {
         trainerQ = nextTrainerQuestion(trainerMode);
       }
@@ -1122,14 +1254,18 @@ const App = (() => {
   }
 
   function trainerButtons(ts) {
+    const wrongN = (Progress.load().wrongQueue || []).length;
     return `
       <button type="button" class="btn btn-primary challenge-btn" data-train="challenge">Günlük challenge (10 soru)</button>
+      <button type="button" class="btn btn-ghost sand-btn challenge-btn" data-train="review">Yanlış tekrarı (${wrongN})</button>
       <div class="quick-train multi">
         <button type="button" class="btn btn-ghost sand-btn" data-train="alpha">Alfabe (${ts.alpha || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="verb">Fiil (${ts.verb || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="gender">Madde (${ts.gender || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="aspect">Aspect (${ts.aspect || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="aorist">Aorist (${ts.aorist || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="perfect">Perfect (${ts.perfect || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="imperative">Emir (${ts.imperative || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="pronoun">Zamir (${ts.pronoun || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="particle">θα/να (${ts.particle || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="passive">Pasif (${ts.passive || 0})</button>
@@ -1139,6 +1275,7 @@ const App = (() => {
         <button type="button" class="btn btn-ghost sand-btn" data-train="prep">Edat (${ts.prep || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="conditional">αν (${ts.conditional || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="number">Sayı (${ts.number || 0})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-train="months">Ay (${ts.months || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="time">Saat (${ts.time || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="dictation">Dikte (${ts.dictation || 0})</button>
         <button type="button" class="btn btn-ghost sand-btn" data-train="listen">Dinle (${ts.listen || 0})</button>

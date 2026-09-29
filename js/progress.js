@@ -24,7 +24,8 @@ const Progress = (() => {
     trainerStats: { alpha: 0, verb: 0, gender: 0, aspect: 0, number: 0, dictation: 0, time: 0, aorist: 0, translate: 0, challenge: 0 },
     challengesWon: 0,
     unlockedBadges: {},
-    writeDone: {}
+    writeDone: {},
+    wrongQueue: []
   });
 
   function load() {
@@ -213,6 +214,36 @@ const Progress = (() => {
     state.trainerStats = state.trainerStats || {};
     state.trainerStats[kind] = (state.trainerStats[kind] || 0) + 1;
     touchActivity(state);
+    save(state);
+    return state;
+  }
+
+  function pushWrong(item) {
+    const state = load();
+    state.wrongQueue = state.wrongQueue || [];
+    const entry = {
+      id: "w" + Date.now() + Math.random().toString(16).slice(2, 6),
+      prompt: String(item.prompt || "").slice(0, 200),
+      answer: String(item.answer || "").slice(0, 120),
+      kind: item.kind || "genel",
+      at: new Date().toISOString()
+    };
+    state.wrongQueue.unshift(entry);
+    state.wrongQueue = state.wrongQueue.slice(0, 40);
+    save(state);
+    return state;
+  }
+
+  function popWrong(id) {
+    const state = load();
+    state.wrongQueue = (state.wrongQueue || []).filter((w) => w.id !== id);
+    save(state);
+    return state;
+  }
+
+  function clearWrongs() {
+    const state = load();
+    state.wrongQueue = [];
     save(state);
     return state;
   }
@@ -423,6 +454,9 @@ const Progress = (() => {
     markSpeak,
     logStudyMinutes,
     bumpTrainer,
+    pushWrong,
+    popWrong,
+    clearWrongs,
     weekActivity,
     winChallenge,
     markWrite,

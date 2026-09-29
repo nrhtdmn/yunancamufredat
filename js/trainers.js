@@ -271,6 +271,49 @@ const TRAINERS = {
     { id: "w5", title: "YDS üslup", prompt: "Eğitim üzerine 180 kelimelik nötr-akademik paragraf yaz.", minutes: 18, checklist: ["εντούτοις/ωστόσο", "1 örnek", "Net sonuç cümlesi"] }
   ],
 
+  imperative: [
+    { tr: "Yaz! (sen)", el: "Γράψε!", tip: "aorist emir" },
+    { tr: "Yazın! (siz)", el: "Γράψτε!", tip: "" },
+    { tr: "Gel!", el: "Έλα!", tip: "düzensiz" },
+    { tr: "Gelin!", el: "Ελάτε!", tip: "" },
+    { tr: "Git!", el: "Πήγαινε!", tip: "" },
+    { tr: "Dinle!", el: "Άκου!", tip: "" },
+    { tr: "Bak!", el: "Κοίτα!", tip: "" },
+    { tr: "Söyle!", el: "Πες!", tip: "düzensiz" },
+    { tr: "Verme! (olumsuz sen)", el: "Μην δώσεις!", tip: "μη + subjunctive" },
+    { tr: "Konuşma!", el: "Μην μιλάς!", tip: "" }
+  ],
+
+  perfect: [
+    { tr: "Yazdım / yazmış durumdayım (perfect)", el: "έχω γράψει", tip: "έχω + aparemphato" },
+    { tr: "Gelmiş (perfect)", el: "έχει έρθει", tip: "" },
+    { tr: "Bitirmişiz", el: "έχουμε τελειώσει", tip: "" },
+    { tr: "Görmüşsün", el: "έχεις δει", tip: "" },
+    { tr: "Söylemişler", el: "έχουν πει", tip: "" },
+    { tr: "Yemiş (perfect)", el: "έχει φάει", tip: "" },
+    { tr: "Almışım", el: "έχω πάρει", tip: "" },
+    { tr: "Vermişsin", el: "έχεις δώσει", tip: "" }
+  ],
+
+  months: [
+    { tr: "Ocak", el: "Ιανουάριος" },
+    { tr: "Şubat", el: "Φεβρουάριος" },
+    { tr: "Mart", el: "Μάρτιος" },
+    { tr: "Nisan", el: "Απρίλιος" },
+    { tr: "Mayıs", el: "Μάιος" },
+    { tr: "Haziran", el: "Ιούνιος" },
+    { tr: "Temmuz", el: "Ιούλιος" },
+    { tr: "Ağustos", el: "Αύγουστος" },
+    { tr: "Eylül", el: "Σεπτέμβριος" },
+    { tr: "Ekim", el: "Οκτώβριος" },
+    { tr: "Kasım", el: "Νοέμβριος" },
+    { tr: "Aralık", el: "Δεκέμβριος" },
+    { tr: "ilkbahar", el: "άνοιξη" },
+    { tr: "yaz", el: "καλοκαίρι" },
+    { tr: "sonbahar", el: "φθινόπωρο" },
+    { tr: "kış", el: "χειμώνας" }
+  ],
+
   badges: [
     { id: "first_task", title: "İlk adım", desc: "İlk görevi tamamla", check: (s) => Object.keys(s.completed || {}).length >= 1 },
     { id: "streak3", title: "3 gün seri", desc: "3 gün üst üste aktif ol", check: (s) => (s.streak || 0) >= 3 },
