@@ -3,3 +3,8 @@ Thumbs.db
 *.log
 .vscode/
 .idea/
+tools/_vocab/
+tools/_deep_b2c2/
+js/_lessons_a.json
+js/_lessons_part1.json
+node_modules/

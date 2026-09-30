@@ -413,12 +413,66 @@ const CURRICULUM = {
   ],
 
   principles: [
+    "Öğretmen verir, öğrenci yapar — seçim yok, atlama yok.",
+    "Yeni konu + aralıklı tekrar: ağır konular daha sık geri gelir.",
     "Her gün en az bir dersi aç ve bitir — mükemmellik değil süreklilik.",
-    "Ders sayfası yeter: konu + örnek + adımlar. Başka kitaba bakmak zorunda değilsin.",
+    "Ders sayfası yeter: konu + örnek + adımlar.",
     "Önce anla, sonra üret: oku/dinle → not → yaz/konuş.",
     "Aorist ile imperfect’i karıştırma; aspect kritiktir.",
-    "YDS puanı okuma + kelime + stratejiden gelir.",
-    "Kapı sınavını geçmeden sonraki seviyeyi zorlama.",
-    "Kaynak çokluğu düşmandır: Οδηγός ne dediyse onu bitir."
-  ]
+    "Yanlış kuyruğu ve unutulan üniteler yeni dersten önce gelir.",
+    "Kapı sınavını geçmeden sonraki seviyeyi zorlama."
+  ],
+
+  /** Öğretim motoru: ağırlık + aralıklı tekrar (spaced repetition) */
+  pedagogy: {
+    summary:
+      "Yeni öğrenme ile eski konuyu karıştır (interleaving). Ağır dilbilgisi daha sık tekrarlanır. Yanlışlar önce gelir.",
+    typeWeight: {
+      study: 5,
+      practice: 4,
+      speak: 4,
+      write: 4,
+      vocab: 3,
+      listen: 3,
+      read: 3,
+      yds: 3,
+      review: 2
+    },
+    /** reviewCount’a göre gün aralığı — ağır tip daha sık */
+    intervalsByWeight: {
+      6: [1, 2, 4, 9],
+      5: [1, 2, 5, 12],
+      4: [1, 3, 7, 14],
+      3: [2, 5, 10, 21],
+      2: [3, 7, 14, 30]
+    },
+    heavyKeywords: [
+      "aorist",
+      "çekim",
+      "aspect",
+      "madde",
+      "cinsiyet",
+      "fiil",
+      "pasif",
+      "subjunctive",
+      "bağlaç",
+      "imperfect",
+      "genitif",
+      "durum",
+      "ώστε",
+      "να ",
+      "θα "
+    ],
+    /** Günde en fazla kaç görev (yeni + tekrar) */
+    dailyCap: 4,
+    /** Kaç yeni sonrası bir tekrar sıkıştırılır (yeterli due varsa) */
+    newPerReview: 2,
+    reviewReasons: {
+      overdue: "Bu konuyu uzun süredir görmedin — unutma eğrisi yükseldi.",
+      heavy: "Ağır dilbilgisi / çekim konusu; sık tekrar şart.",
+      recent: "Dün/yeni öğrendin; ilk pekiştirme turu.",
+      weak: "Yanlış kuyruğunda zayıf nokta var — önce onu temizle.",
+      interleave: "Arada eski konuya dönüyoruz; karışık çalışma kalıcı öğrenmeyi güçlendirir."
+    }
+  }
 };

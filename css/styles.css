@@ -61,6 +61,12 @@ select {
   padding-bottom: calc(72px + var(--safe-bottom));
 }
 
+.teacher-shell {
+  grid-template-rows: auto 1fr;
+  padding-bottom: calc(16px + var(--safe-bottom));
+  position: relative;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -1793,4 +1799,398 @@ select {
 }
 .task-body {
   cursor: pointer;
+}
+
+/* ?? ??retmen kabu?u: hamburger + ?ekmece ?? */
+.menu-toggle {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(243, 235, 224, 0.22);
+  border-radius: 12px;
+  background: rgba(243, 235, 224, 0.08);
+  color: var(--sand);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.burger {
+  display: grid;
+  gap: 5px;
+  width: 18px;
+}
+
+.burger i {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: var(--sand);
+  border-radius: 2px;
+}
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 24, 32, 0.55);
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(300px, 86vw);
+  z-index: 50;
+  background: linear-gradient(180deg, #0e3d4d, #071820);
+  color: var(--sand);
+  padding: 28px 20px calc(24px + var(--safe-bottom));
+  transform: translateX(104%);
+  transition: transform 0.25s ease;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.35);
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.drawer.open {
+  transform: none;
+}
+
+.drawer-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.drawer-nav {
+  display: grid;
+  gap: 6px;
+}
+
+.drawer-nav button {
+  text-align: left;
+  border: 1px solid rgba(243, 235, 224, 0.14);
+  background: rgba(243, 235, 224, 0.06);
+  color: var(--sand);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.drawer-nav button.active {
+  background: rgba(212, 160, 23, 0.22);
+  border-color: rgba(212, 160, 23, 0.45);
+}
+
+.drawer-meta {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.drawer-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  opacity: 0.6;
+}
+
+.today-teacher .teacher-card {
+  margin-top: 8px;
+}
+
+.teacher-note {
+  margin: 18px 4px 0;
+  color: rgba(243, 235, 224, 0.7);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.agenda-mix {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: rgba(243, 235, 224, 0.72);
+}
+
+.teacher-reason {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(212, 160, 23, 0.12);
+  border: 1px solid rgba(212, 160, 23, 0.28);
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.review-card {
+  border-color: rgba(212, 160, 23, 0.35);
+}
+
+.lesson-review .review-why {
+  background: rgba(212, 160, 23, 0.1);
+}
+
+.sand-panel,
+.add-form {
+  background: rgba(255, 253, 249, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: grid;
+  gap: 10px;
+  color: var(--ink);
+}
+
+.add-form-title {
+  margin: 0;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.add-form label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.add-form input,
+.add-form select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  background: #fff;
+  color: var(--ink);
+}
+
+.word-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.word-speak {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  min-width: 0;
+}
+
+.btn-del {
+  border: 1px solid rgba(138, 69, 53, 0.35);
+  background: rgba(138, 69, 53, 0.08);
+  color: var(--danger);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  align-self: center;
+}
+
+.settings-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.settings-actions .file-label {
+  display: block;
+  text-align: center;
+  cursor: pointer;
+}
+
+.danger-btn {
+  border-color: rgba(138, 69, 53, 0.45) !important;
+  color: #f0c4b8 !important;
+}
+
+.settings-stats .meta {
+  margin: 4px 0;
+  color: var(--ink-soft);
+}
+
+.teacher-shell .tabbar {
+  display: none;
+}
+
+.scroll-top {
+  position: fixed;
+  right: max(16px, calc(50% - 344px));
+  bottom: calc(20px + var(--safe-bottom));
+  z-index: 30;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(243, 235, 224, 0.28);
+  background: rgba(14, 61, 77, 0.95);
+  color: var(--sand);
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.scroll-top[hidden] {
+  display: none !important;
+}
+
+.diag-bands {
+  list-style: none;
+  margin: 12px 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.drawer-nav button.drawer-anki {
+  margin-top: 8px;
+  border-style: dashed;
+}
+
+.anki-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  text-align: center;
+}
+
+.anki-stat .n {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--bg1);
+}
+
+.anki-stat .l {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.anki-start-stack {
+  margin-top: 8px;
+}
+
+.anki-study {
+  padding-bottom: 24px;
+}
+
+.anki-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.anki-card {
+  width: 100%;
+  min-height: 260px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 20px;
+  background: rgba(255, 253, 249, 0.96);
+  color: var(--ink);
+  padding: 24px 20px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.anki-kind {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+
+.anki-front {
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-family: var(--font-greek);
+}
+
+.anki-back {
+  font-size: 1.15rem;
+  line-height: 1.45;
+  white-space: pre-line;
+  color: var(--ink-soft);
+}
+
+.anki-back small {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.anki-hint {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+.anki-rates {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.anki-rates .btn {
+  padding: 12px 6px;
+  font-size: 0.82rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.rate-again {
+  background: #f3d9d4;
+  color: #6a3228;
+}
+
+.rate-hard {
+  background: #f3e6c8;
+  color: #6a4e16;
+}
+
+.rate-good {
+  background: #d7ebe3;
+  color: #1f4f45;
+}
+
+.rate-easy {
+  background: #d5e4f0;
+  color: #1f3f5a;
+}
+
+@media (max-width: 420px) {
+  .anki-rates {
+    grid-template-columns: 1fr 1fr;
+  }
 }

@@ -31,6 +31,12 @@ const App = (() => {
   let patternFilterCat = "all";
   let patternFilterLevel = "all";
   let patternSearch = "";
+  let wordSearch = "";
+  let menuOpen = false;
+  let activeAssignmentId = null;
+  let activeAssignmentKind = null;
+  let ankiSession = null; // { queue, index, flipped, done, again, good }
+  let ankiPool = "due"; // due | level | custom | patterns
 
   function attachGreekKeyboard(form, inputName) {
     const input = form.querySelector(`[name="${inputName}"]`);
@@ -106,9 +112,26 @@ const App = (() => {
     return a;
   }
 
+  function finishTrainerSession() {
+    if (activeAssignmentKind === "weak" && activeAssignmentId) {
+      Progress.completeAssignment(activeAssignmentId);
+    }
+    activeAssignmentId = null;
+    activeAssignmentKind = null;
+    trainerMode = null;
+    trainerQ = null;
+    trainerFeedback = null;
+    challengeQueue = [];
+    view = "today";
+  }
+
   function render() {
     const state = Progress.load();
     const root = $("#app");
+    if (view !== "lesson" && scrollTopCleanup) {
+      scrollTopCleanup();
+      scrollTopCleanup = null;
+    }
     if (diagActive) {
       root.innerHTML = "";
       root.appendChild(renderDiagnostic());
@@ -138,8 +161,8 @@ const App = (() => {
       <div class="onboard-bg" aria-hidden="true"></div>
       <div class="onboard-card">
         <p class="brand-mark">Οδηγός</p>
-        <h1>Yunanca seni sisteme bağlar</h1>
-        <p class="lede">A0’dan C2+’ya tek yol. Uygulama ne diyecek, sen yapacaksın. Sonunda dil senin olacak — YDS dahil.</p>
+        <h1>Ben öğretmeninim. Sen öğrencisin.</h1>
+        <p class="lede">Sana sırayla ne yapacağını söyleyeceğim. Sen sadece onu yap. Atlamayacaksın, seçmeyeceksin — takip edeceksin.</p>
         <form id="onboard-form" class="onboard-form">
           <label>
             <span>Adın (isteğe bağlı)</span>
@@ -151,26 +174,11 @@ const App = (() => {
               ${CURRICULUM.levels.map((l) => `<option value="${l.id}" ${l.id === "a1" ? "selected" : ""}>${l.code} — ${escapeHtml(l.title)}</option>`).join("")}
             </select>
           </label>
-          <p class="hint">8 aydır çalışıyorsan genelde A1–A2. Emin değilsen teşhis sınavını çalıştır.</p>
-          <label>
-            <span>Günlük tempo</span>
-            <select name="mode">
-              ${Object.entries(CURRICULUM.dailyTemplates)
-                .map(([k, v]) => `<option value="${k}" ${k === "standard" ? "selected" : ""}>${escapeHtml(v.label)}</option>`)
-                .join("")}
-            </select>
-          </label>
-          <label>
-            <span>Günlük dakika hedefi</span>
-            <select name="goal">
-              <option value="25">25 dk</option>
-              <option value="45" selected>45 dk</option>
-              <option value="60">60 dk</option>
-              <option value="90">90 dk</option>
-            </select>
-          </label>
-          <button type="submit" class="btn btn-primary">Yolculuğu başlat</button>
-          <button type="button" class="btn btn-ghost" id="start-diag">Önce teşhis sınavı (16 soru)</button>
+          <p class="hint">Emin değilsen önce 50 soruluk seviye tespit sınavını çöz.</p>
+          <input type="hidden" name="mode" value="standard" />
+          <input type="hidden" name="goal" value="45" />
+          <button type="submit" class="btn btn-primary">Öğretmene bağlan</button>
+          <button type="button" class="btn btn-ghost" id="start-diag">Önce seviye tespit (50 soru)</button>
         </form>
       </div>
     </div>`);
@@ -197,30 +205,79 @@ const App = (() => {
     return wrap;
   }
 
+  let scrollTopCleanup = null;
+
+  function bindScrollTop(host) {
+    if (scrollTopCleanup) {
+      scrollTopCleanup();
+      scrollTopCleanup = null;
+    }
+    if (!host) return;
+    const btn = el(`<button type="button" class="scroll-top" hidden aria-label="Yukarı çık">↑</button>`);
+    host.appendChild(btn);
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const max = Math.max(0, doc.scrollHeight - window.innerHeight);
+      const y = window.scrollY || doc.scrollTop || 0;
+      const nearBottom = max > 240 && y >= max - 100;
+      btn.hidden = !nearBottom;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    btn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    scrollTopCleanup = () => {
+      window.removeEventListener("scroll", onScroll);
+      btn.remove();
+    };
+  }
+
   function renderDiagnostic() {
     const items = CONTENT.diagnostic;
     if (diagIndex >= items.length) {
       const correct = diagAnswers.filter(Boolean).length;
-      const levelId = CONTENT.levelFromScore(correct, items.length);
-      const level = CURRICULUM.levels.find((l) => l.id === levelId);
+      const levelId =
+        typeof CONTENT.levelFromScore === "function"
+          ? CONTENT.levelFromScore(correct, items.length, diagAnswers)
+          : "a1";
+      const level = CURRICULUM.levels.find((l) => l.id === levelId) || CURRICULUM.levels[0];
       Progress.saveDiagnostic({ correct, total: items.length, levelId });
+      const bands =
+        typeof CONTENT.diagnosticBreakdown === "function" ? CONTENT.diagnosticBreakdown(diagAnswers) : [];
+      const bandHtml = bands.length
+        ? `<ul class="diag-bands">${bands
+            .map(
+              (b) =>
+                `<li><span>${escapeHtml(String(b.level).toUpperCase())}</span><span>${b.ok}/${b.n} · %${b.pct}</span></li>`
+            )
+            .join("")}</ul>`
+        : "";
       const wrap = el(`<div class="onboard">
         <div class="onboard-bg" aria-hidden="true"></div>
         <div class="onboard-card">
-          <p class="brand-mark">Teşhis</p>
+          <p class="brand-mark">Seviye tespit · 50 soru</p>
           <h1>${correct}/${items.length}</h1>
-          <p class="lede">Önerilen başlangıç: <strong>${escapeHtml(level.code)} · ${escapeHtml(level.title)}</strong></p>
-          <button class="btn btn-primary" id="diag-apply">Bu seviyeyle başla</button>
+          <p class="lede">Ölçülen seviye: <strong>${escapeHtml(level.code)} · ${escapeHtml(level.title)}</strong></p>
+          <p class="meta">Skor bant bant hesaplanır; alt seviyeler zayıfsa öneri düşer.</p>
+          ${bandHtml}
+          <button class="btn btn-primary" id="diag-apply">Bu seviyeyle devam</button>
           <button class="btn btn-ghost" id="diag-again">Tekrar çöz</button>
         </div>
       </div>`);
       wrap.querySelector("#diag-apply").addEventListener("click", () => {
         const state = Progress.load();
-        Progress.completeOnboarding({
-          name: state.displayName || "",
-          levelId,
-          dailyMode: state.dailyMode || "standard"
-        });
+        if (!state.onboardingDone) {
+          Progress.completeOnboarding({
+            name: state.displayName || "",
+            levelId,
+            dailyMode: state.dailyMode || "standard",
+            dailyGoalMin: state.dailyGoalMin || 45
+          });
+        } else {
+          Progress.setLevel(levelId);
+          Progress.rebuildTeacherAgenda();
+        }
         diagActive = false;
         view = "today";
         render();
@@ -237,7 +294,7 @@ const App = (() => {
     const wrap = el(`<div class="onboard">
       <div class="onboard-bg" aria-hidden="true"></div>
       <div class="onboard-card diag-card">
-        <p class="eyebrow">Soru ${diagIndex + 1} / ${items.length}</p>
+        <p class="eyebrow">Seviye tespit · ${diagIndex + 1} / ${items.length}${item.level ? ` · ${String(item.level).toUpperCase()}` : ""}</p>
         <h1 class="diag-q">${escapeHtml(item.q)}</h1>
         <div class="diag-opts" id="diag-opts"></div>
         <div class="progress-line lg"><span style="width:${Math.round((diagIndex / items.length) * 100)}%"></span></div>
@@ -259,102 +316,320 @@ const App = (() => {
 
   function renderShell(state) {
     const stats = Progress.overallStats();
-    const shell = el(`<div class="shell">
+    const name = state.displayName ? escapeHtml(state.displayName) : "öğrenci";
+    const shell = el(`<div class="shell teacher-shell">
       <header class="topbar">
         <div class="topbar-brand">
           <span class="logo">Οδηγός</span>
-          <span class="logo-sub">Yunanca A0 → C2+</span>
+          <span class="logo-sub">Öğretmen · ${name}</span>
         </div>
-        <div class="topbar-meta">
-          <span class="pill" title="Seri">${stats.streak} gün seri</span>
-          <span class="pill muted">${stats.pct}%</span>
-        </div>
+        <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Menü" aria-expanded="${menuOpen}">
+          <span class="burger" aria-hidden="true"><i></i><i></i><i></i></span>
+        </button>
       </header>
+      <div class="drawer-backdrop ${menuOpen ? "open" : ""}" id="drawer-backdrop" ${menuOpen ? "" : "hidden"}></div>
+      <aside class="drawer ${menuOpen ? "open" : ""}" id="drawer" aria-hidden="${!menuOpen}">
+        <p class="drawer-title">Menü</p>
+        <nav class="drawer-nav">
+          <button type="button" data-view="today" class="${view === "today" || view === "lesson" ? "active" : ""}">Ders (şimdi)</button>
+          <button type="button" data-view="words" class="${view === "words" ? "active" : ""}">Kelimeler</button>
+          <button type="button" data-view="patterns" class="${view === "patterns" ? "active" : ""}">Kalıplar</button>
+          <button type="button" data-view="settings" class="${view === "settings" ? "active" : ""}">Ayarlar</button>
+          <button type="button" data-view="anki" class="drawer-anki ${view === "anki" ? "active" : ""}">Anki</button>
+        </nav>
+        <p class="drawer-meta">${stats.streak} gün seri · %${stats.pct}</p>
+        <p class="drawer-hint">Atlama yok. Öğretmen ne verdiyse onu yap.</p>
+      </aside>
       <main class="main" id="main"></main>
-      <nav class="tabbar" aria-label="Ana menü">
-        <button data-view="today" class="${view === "today" ? "active" : ""}"><span class="tab-icon">◎</span>Bugün</button>
-        <button data-view="roadmap" class="${view === "roadmap" || view === "level" ? "active" : ""}"><span class="tab-icon">☰</span>Yol</button>
-        <button data-view="patterns" class="${view === "patterns" ? "active" : ""}"><span class="tab-icon">◇</span>Kalıp</button>
-        <button data-view="cards" class="${view === "cards" ? "active" : ""}"><span class="tab-icon">Α</span>Kart</button>
-        <button data-view="yds" class="${view === "yds" ? "active" : ""}"><span class="tab-icon">✦</span>YDS</button>
-        <button data-view="progress" class="${view === "progress" ? "active" : ""}"><span class="tab-icon">▣</span>İlerleme</button>
-      </nav>
     </div>`);
 
-    shell.querySelectorAll(".tabbar button").forEach((btn) => {
+    const closeMenu = () => {
+      menuOpen = false;
+      render();
+    };
+
+    shell.querySelector("#menu-toggle").addEventListener("click", () => {
+      menuOpen = !menuOpen;
+      render();
+    });
+    shell.querySelector("#drawer-backdrop").addEventListener("click", closeMenu);
+    shell.querySelectorAll(".drawer-nav button").forEach((btn) => {
       btn.addEventListener("click", () => {
         view = btn.dataset.view;
         selectedLevelId = null;
         cardDeckId = null;
+        activeTaskId = null;
+        menuOpen = false;
         render();
       });
     });
 
     const main = shell.querySelector("#main");
     if (view === "today") main.appendChild(renderToday(state));
-    else if (view === "roadmap") main.appendChild(renderRoadmap());
-    else if (view === "level") main.appendChild(renderLevel(selectedLevelId || state.currentLevelId));
     else if (view === "lesson") main.appendChild(renderLesson(state));
-    else if (view === "patterns") main.appendChild(renderPatternsBank());
-    else if (view === "cards") main.appendChild(renderCards(state));
-    else if (view === "yds") main.appendChild(renderYds());
-    else if (view === "progress") main.appendChild(renderProgress(state));
+    else if (view === "words") main.appendChild(renderWordsBank(state));
+    else if (view === "patterns") main.appendChild(renderPatternsBank(state));
+    else if (view === "settings") main.appendChild(renderSettings(state));
+    else if (view === "anki") main.appendChild(renderAnki(state));
+    else {
+      view = "today";
+      main.appendChild(renderToday(state));
+    }
 
     return shell;
   }
 
   function renderToday(state) {
-    const plan = Progress.todayPlan();
-    const next = Progress.nextIncompleteTask();
+    const next = Progress.nextTeacherAssignment();
+    const agenda = Progress.agendaStats();
     const name = state.displayName ? `, ${escapeHtml(state.displayName)}` : "";
     const level = CURRICULUM.levels.find((l) => l.id === state.currentLevelId);
-    const deckId = CONTENT.decks[level.id] ? level.id : level.id === "c2plus" ? "yds" : "a1";
     const todayMins = (state.studyLog || {})[Progress.todayStr()] || 0;
     const goal = state.dailyGoalMin || 45;
     const goalPct = Math.min(100, Math.round((todayMins / goal) * 100));
-    const phrase = EXTRAS4.phrases[new Date().getDate() % EXTRAS4.phrases.length];
-    const doneToday = plan.items.filter(({ task }) => Progress.isDone(task.id)).length;
-    const section = el(`<section class="view today-view today-slim">
+    const ped = CURRICULUM.pedagogy || {};
+
+    let cardHtml = "";
+    if (!next) {
+      cardHtml = `<article class="focus-card done teacher-card">
+        <p class="eyebrow">Öğretmen</p>
+        <h2>Bugünlük bu kadar</h2>
+        <p>Yeni konu ve tekrarlar bitti. Dinlen. Yarın ağırlığa göre yeni plan kuracağım.</p>
+      </article>`;
+    } else if (next.kind === "weak") {
+      cardHtml = `<article class="focus-card teacher-card review-card">
+        <p class="eyebrow">Tekrar · zayıf nokta</p>
+        <h2>${escapeHtml(next.assignment.title)}</h2>
+        <p class="teacher-reason">${escapeHtml(next.reason)}</p>
+        <p>${escapeHtml(next.assignment.detail)}</p>
+        <div class="focus-meta">
+          <span class="badge badge-review">Zayıf tekrar</span>
+          <span class="meta">~${next.minutes} dk · ${next.wrongCount || 0} madde</span>
+        </div>
+        <button class="btn btn-primary" id="start-weak">Başla</button>
+        <button class="btn btn-ghost" data-finish="${escapeHtml(next.assignment.id)}">Tamamladım</button>
+      </article>`;
+    } else if (next.kind === "review") {
+      const code = next.level ? next.level.code : "";
+      cardHtml = `<article class="focus-card teacher-card review-card">
+        <p class="eyebrow">Tekrar · öğretmen kararı</p>
+        <h2>${escapeHtml(next.task.title)}</h2>
+        <p class="teacher-reason">${escapeHtml(next.reason)}</p>
+        <p>${escapeHtml(next.task.detail)}</p>
+        <div class="focus-meta">
+          <span class="badge badge-review">Aralıklı tekrar</span>
+          ${typeBadge(next.task.type)}
+          <span class="meta">~${next.minutes} dk · ${escapeHtml(code)} · ${escapeHtml(next.unit?.title || "")}</span>
+        </div>
+        <button class="btn btn-primary" data-open-assign="${escapeHtml(next.assignment.id)}">Tekrara başla</button>
+        <button class="btn btn-ghost" data-finish="${escapeHtml(next.assignment.id)}">Tamamladım</button>
+      </article>`;
+    } else {
+      const code = next.level ? next.level.code : "";
+      cardHtml = `<article class="focus-card teacher-card">
+        <p class="eyebrow">Yeni konu · şimdi bunu yap</p>
+        <h2>${escapeHtml(next.task.title)}</h2>
+        <p>${escapeHtml(next.task.detail)}</p>
+        <div class="focus-meta">
+          ${typeBadge(next.task.type)}
+          <span class="meta">~${next.minutes} dk · ${escapeHtml(code)} · ${escapeHtml(next.unit?.title || "")}</span>
+        </div>
+        <button class="btn btn-primary" data-open-assign="${escapeHtml(next.assignment.id)}">Başla</button>
+        <button class="btn btn-ghost" data-finish="${escapeHtml(next.assignment.id)}">Tamamladım</button>
+      </article>`;
+    }
+
+    const section = el(`<section class="view today-view today-teacher">
       <div class="hero-today">
-        <p class="eyebrow">${escapeHtml(level.code)} · ${escapeHtml(plan.label)}</p>
+        <p class="eyebrow">Öğretmen · ${escapeHtml(level.code)}</p>
         <h1>Merhaba${name}</h1>
         <div class="goal-box">
-          <div class="goal-top"><span>${todayMins}/${goal} dk</span><span>${doneToday}/${plan.items.length} görev</span></div>
+          <div class="goal-top"><span>${todayMins}/${goal} dk</span><span>${agenda.remaining ? `${agenda.done}/${agenda.total} · ${agenda.remaining} kaldı` : "bugün bitti"}</span></div>
           <div class="progress-line lg"><span style="width:${goalPct}%"></span></div>
         </div>
+        ${agenda.reviews ? `<p class="agenda-mix">Bugün ${agenda.reviews} tekrar slotu var — ağır konular daha sık geri gelir.</p>` : ""}
       </div>
 
-      <article class="phrase-slim" id="phrase-slim">
-        <p class="greek-line">${escapeHtml(phrase.el)}</p>
-        <p class="meta">${escapeHtml(phrase.tr)}</p>
-      </article>
+      ${cardHtml}
 
-      ${
-        next
-          ? `<article class="focus-card">
-              <p class="eyebrow">Şimdi yap</p>
-              <h2>${escapeHtml(next.task.title)}</h2>
-              <p>${escapeHtml(next.task.detail)}</p>
-              <div class="focus-meta">
-                ${typeBadge(next.task.type)}
-                <span class="meta">~${next.task.minutes} dk · ${escapeHtml(next.unit.title)}</span>
-              </div>
-              <button class="btn btn-primary" data-open-lesson="${next.task.id}">Dersi aç</button>
-              <button class="btn btn-ghost" data-do="${next.task.id}" data-min="${next.task.minutes}">Tamamladım</button>
-            </article>`
-          : `<article class="focus-card done"><h2>Bugün bitti</h2><p>Plan tamam. Kart veya hızlı tur ile pekiştir.</p></article>`
-      }
+      <p class="teacher-note">${escapeHtml(ped.summary || "Yeni konu + aralıklı tekrar. Sen sadece verileni yap.")}</p>
+    </section>`);
 
-      <div class="today-actions">
-        <button type="button" class="btn btn-primary" id="go-cards">Kartlar</button>
-        <button type="button" class="btn btn-ghost" data-train="flash5">Hızlı 5</button>
-        <button type="button" class="btn btn-ghost" id="go-patterns">Kalıp</button>
+    section.querySelectorAll("[data-finish]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        Progress.completeAssignment(btn.dataset.finish);
+        activeAssignmentId = null;
+        activeAssignmentKind = null;
+        render();
+      });
+    });
+
+    section.querySelector("[data-open-assign]")?.addEventListener("click", (e) => {
+      const id = e.currentTarget.dataset.openAssign;
+      openAssignment(id);
+    });
+
+    section.querySelector("#start-weak")?.addEventListener("click", () => {
+      activeAssignmentId = next.assignment.id;
+      activeAssignmentKind = "weak";
+      startTrainer("review");
+      render();
+    });
+
+    return section;
+  }
+
+  function openAssignment(assignmentId) {
+    const next = Progress.nextTeacherAssignment();
+    if (!next || !next.assignment || next.assignment.id !== assignmentId) {
+      view = "today";
+      render();
+      return;
+    }
+    activeAssignmentId = assignmentId;
+    activeAssignmentKind = next.kind;
+    if (next.kind === "weak") {
+      startTrainer("review");
+      render();
+      return;
+    }
+    activeTaskId = next.task.id;
+    lessonReturnView = "today";
+    view = "lesson";
+    render();
+  }
+
+  function collectAllWords(state) {
+    const built = [];
+    const decks = (typeof CONTENT !== "undefined" && CONTENT.decks) || {};
+    Object.keys(decks).forEach((deckId) => {
+      (decks[deckId] || []).forEach((w) => {
+        built.push({
+          id: `sys_${deckId}_${w.el}`,
+          el: w.el,
+          tr: w.tr,
+          tip: w.tip || "",
+          deck: deckId,
+          custom: false
+        });
+      });
+    });
+    (state.customWords || []).forEach((w) => built.push({ ...w, custom: true }));
+    return built;
+  }
+
+  function collectAllPatterns(state) {
+    const bank = typeof PATTERNS !== "undefined" && Array.isArray(PATTERNS.bank) ? PATTERNS.bank : [];
+    const built = bank.map((p, i) => ({
+      ...p,
+      id: p.id || `sys_p_${i}`,
+      custom: false
+    }));
+    (state.customPatterns || []).forEach((p) => built.push({ ...p, custom: true }));
+    return built;
+  }
+
+  function renderWordsBank(state) {
+    const all = collectAllWords(state);
+    const q = (wordSearch || "").trim().toLowerCase();
+    const filtered = !q
+      ? all
+      : all.filter((w) => `${w.el} ${w.tr} ${w.tip} ${w.deck || ""}`.toLowerCase().includes(q));
+
+    const section = el(`<section class="view list-view">
+      <div class="view-intro">
+        <p class="eyebrow">Liste</p>
+        <h1>Kelimeler</h1>
+        <p class="lede">${all.length} kelime · ${filtered.length} gösteriliyor</p>
       </div>
 
-      <details class="plan-fold">
-        <summary>Bugünün planı (${doneToday}/${plan.items.length})</summary>
-        <div class="section-head plan-mode">
-          <select id="mode-select" aria-label="Günlük tempo">
+      <form class="add-form sand-panel" id="add-word-form">
+        <p class="add-form-title">Kelime ekle</p>
+        <label><span>Yunanca</span><input name="el" required maxlength="80" autocomplete="off" placeholder="π.χ. καλημέρα" /></label>
+        <label><span>Türkçe</span><input name="tr" required maxlength="120" autocomplete="off" placeholder="günaydın" /></label>
+        <label><span>Not (isteğe bağlı)</span><input name="tip" maxlength="120" autocomplete="off" placeholder="kısa not" /></label>
+        <button type="submit" class="btn btn-primary">Ekle</button>
+      </form>
+
+      <input type="search" id="word-q" class="pattern-search" placeholder="Ara…" value="${escapeHtml(wordSearch)}" autocomplete="off" />
+      <ul class="pattern-list" id="word-list"></ul>
+      ${filtered.length ? "" : `<p class="meta sand-meta">Eşleşen kelime yok.</p>`}
+    </section>`);
+
+    const list = section.querySelector("#word-list");
+    filtered.forEach((w) => {
+      const li = el(`<li class="pattern-item">
+        <div class="pattern-card word-row">
+          <button type="button" class="word-speak">
+            <strong class="pattern-frame">${escapeHtml(w.el)}</strong>
+            <span class="pattern-tr">${escapeHtml(w.tr)}</span>
+            ${w.tip ? `<span class="pattern-eg">${escapeHtml(w.tip)}</span>` : ""}
+            ${w.custom ? `<span class="pill muted">benim</span>` : w.deck ? `<span class="pill muted">${escapeHtml(String(w.deck).toUpperCase())}</span>` : ""}
+          </button>
+          ${w.custom ? `<button type="button" class="btn-del" data-del="${escapeHtml(w.id)}" aria-label="Sil">Sil</button>` : ""}
+        </div>
+      </li>`);
+      li.querySelector(".word-speak").addEventListener("click", () => speakGreek(w.el));
+      li.querySelector("[data-del]")?.addEventListener("click", () => {
+        Progress.removeCustomWord(w.id);
+        render();
+      });
+      list.appendChild(li);
+    });
+
+    let searchTimer = null;
+    section.querySelector("#word-q").addEventListener("input", (e) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        wordSearch = e.target.value || "";
+        render();
+      }, 180);
+    });
+
+    section.querySelector("#add-word-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      Progress.addCustomWord({
+        el: fd.get("el"),
+        tr: fd.get("tr"),
+        tip: fd.get("tip")
+      });
+      wordSearch = "";
+      render();
+    });
+
+    return section;
+  }
+
+  function renderSettings(state) {
+    const stats = Progress.overallStats();
+    const section = el(`<section class="view settings-view list-view">
+      <div class="view-intro">
+        <p class="eyebrow">Menü</p>
+        <h1>Ayarlar</h1>
+        <p class="lede">Seviye ve tempo burada. Ders akışını sen seçmezsin — öğretmen hâlâ verir.</p>
+      </div>
+
+      <form class="add-form sand-panel" id="settings-form">
+        <p class="add-form-title">Profil</p>
+        <label>
+          <span>Adın</span>
+          <input name="name" type="text" maxlength="40" value="${escapeHtml(state.displayName || "")}" placeholder="Örn. Nurhat" autocomplete="nickname" />
+        </label>
+        <label>
+          <span>Seviye</span>
+          <select name="level">
+            ${CURRICULUM.levels
+              .map(
+                (l) =>
+                  `<option value="${l.id}" ${l.id === state.currentLevelId ? "selected" : ""}>${l.code} — ${escapeHtml(l.title)}</option>`
+              )
+              .join("")}
+          </select>
+        </label>
+        <label>
+          <span>Günlük tempo</span>
+          <select name="mode">
             ${Object.entries(CURRICULUM.dailyTemplates)
               .map(
                 ([k, v]) =>
@@ -362,50 +637,282 @@ const App = (() => {
               )
               .join("")}
           </select>
-        </div>
-        <ul class="task-list" id="today-list"></ul>
-      </details>
+        </label>
+        <label>
+          <span>Günlük dakika hedefi</span>
+          <select name="goal">
+            ${[25, 45, 60, 90]
+              .map((g) => `<option value="${g}" ${g === (state.dailyGoalMin || 45) ? "selected" : ""}>${g} dk</option>`)
+              .join("")}
+          </select>
+        </label>
+        <label>
+          <span>Ses hızı</span>
+          <select name="tts">
+            <option value="0.75" ${ttsRate === 0.75 ? "selected" : ""}>Yavaş</option>
+            <option value="0.9" ${ttsRate === 0.9 ? "selected" : ""}>Normal</option>
+            <option value="1.05" ${ttsRate === 1.05 ? "selected" : ""}>Hızlı</option>
+          </select>
+        </label>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+      </form>
+
+      <article class="sand-panel settings-stats">
+        <p class="add-form-title">Durum</p>
+        <p class="meta">${stats.streak} gün seri · %${stats.pct} tamamlanma · ${stats.done} görev</p>
+        <p class="meta">Kalıp bankası: ${
+          typeof PATTERNS !== "undefined" && PATTERNS.bank ? PATTERNS.bank.length : 0
+        } · Kelime: ${
+          typeof CONTENT !== "undefined" && CONTENT.vocabCount ? CONTENT.vocabCount() : "—"
+        } · Senin kalıpların: ${(state.customPatterns || []).length}</p>
+      </article>
+
+      <div class="settings-actions">
+        <button type="button" class="btn btn-primary" id="start-level-test">Seviye tespit sınavı (50 soru)</button>
+        <button type="button" class="btn btn-ghost sand-btn" id="rebuild-agenda">Bugünkü planı yenile</button>
+        <button type="button" class="btn btn-ghost sand-btn" id="export-settings">Yedek al</button>
+        <label class="btn btn-ghost sand-btn file-label">Yedek yükle<input type="file" id="import-settings" accept="application/json,.json" hidden /></label>
+        <button type="button" class="btn btn-ghost sand-btn danger-btn" id="reset-settings">Sıfırla</button>
+      </div>
     </section>`);
 
-    const list = section.querySelector("#today-list");
-    plan.items.forEach(({ level: lv, unit, task }) => {
-      list.appendChild(taskRow(lv, unit, task));
-    });
-
-    section.querySelector("#mode-select")?.addEventListener("change", (e) => {
-      Progress.setDailyMode(e.target.value);
+    section.querySelector("#settings-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      Progress.setDisplayName(fd.get("name"));
+      Progress.setLevel(fd.get("level"));
+      Progress.setDailyMode(fd.get("mode"));
+      Progress.setDailyGoal(fd.get("goal"));
+      ttsRate = Number(fd.get("tts")) || 0.9;
+      Progress.rebuildTeacherAgenda();
+      view = "today";
       render();
     });
 
-    section.querySelector("[data-do]")?.addEventListener("click", (e) => {
-      const btn = e.currentTarget;
-      Progress.toggleTask(btn.dataset.do, Number(btn.dataset.min) || 0);
+    section.querySelector("#rebuild-agenda").addEventListener("click", () => {
+      Progress.rebuildTeacherAgenda();
+      view = "today";
       render();
     });
 
-    section.querySelector("[data-open-lesson]")?.addEventListener("click", (e) => {
-      openLesson(e.currentTarget.dataset.openLesson, "today");
-    });
-
-    section.querySelector("#go-cards")?.addEventListener("click", () => {
-      view = "cards";
-      cardDeckId = deckId;
-      startDeck(deckId);
+    section.querySelector("#start-level-test").addEventListener("click", () => {
+      diagIndex = 0;
+      diagAnswers = [];
+      diagActive = true;
+      menuOpen = false;
       render();
     });
 
-    section.querySelector("#go-patterns")?.addEventListener("click", () => {
-      view = "patterns";
+    section.querySelector("#export-settings").addEventListener("click", () => {
+      const data = Progress.exportData();
+      const blob = new Blob([data], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `odigos-yedek-${Progress.todayStr()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    section.querySelector("#import-settings").addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        Progress.importData(text);
+        Progress.rebuildTeacherAgenda();
+        view = "today";
+        render();
+      } catch {
+        alert("Yedek okunamadı.");
+      }
+    });
+
+    section.querySelector("#reset-settings").addEventListener("click", () => {
+      if (!confirm("Tüm ilerleme silinsin mi? Bu geri alınamaz.")) return;
+      Progress.resetAll();
+      view = "today";
       render();
     });
 
-    section.querySelector("#phrase-slim")?.addEventListener("click", () => {
-      speakGreek(phrase.el);
-    });
+    return section;
+  }
 
-    section.querySelectorAll("[data-train]").forEach((btn) => {
+  function renderAnki(state) {
+    if (ankiSession) return renderAnkiSession(state);
+
+    const words = collectAllWords(state);
+    const patterns = collectAllPatterns(state);
+    const levelId = state.currentLevelId || "a1";
+
+    const wordCards = words.map((w) => ({
+      key: Progress.cardKey(w.deck || "mega", w.el),
+      front: w.el,
+      back: w.tr,
+      tip: w.tip || "",
+      kind: "kelime",
+      deck: w.deck || ""
+    }));
+    const patternCards = patterns.map((p) => ({
+      key: Progress.cardKey("pattern", p.id || p.eg),
+      front: p.frame,
+      back: `${p.eg}\n${p.tr || ""}`,
+      tip: p.cat || "",
+      kind: "kalıp",
+      deck: p.level || ""
+    }));
+    const customCards = (state.customWords || []).map((w) => ({
+      key: Progress.cardKey("custom", w.el),
+      front: w.el,
+      back: w.tr,
+      tip: w.tip || "",
+      kind: "kelime",
+      deck: "benim"
+    }));
+    const levelCards = wordCards.filter((c) => c.deck === levelId || c.deck === "benim");
+
+    const dueKeys = wordCards.map((c) => c.key);
+    const stats = Progress.ankiStatsForKeys(dueKeys);
+    const reviewedDue = wordCards.filter((c) => Progress.isCardDue(c.key));
+    const newCards = wordCards.filter((c) => !Progress.getCardState(c.key).reviews);
+    const dueCards = reviewedDue.concat(shuffle(newCards).slice(0, 15)).slice(0, 40);
+
+    const section = el(`<section class="view anki-view list-view">
+      <div class="view-intro">
+        <p class="eyebrow">Aralıklı tekrar</p>
+        <h1>Anki</h1>
+        <p class="lede">Kendi kelimelerinle Anki gibi çalış. Bağlantı yok — her şey burada.</p>
+      </div>
+
+      <article class="sand-panel anki-stats-panel">
+        <div class="anki-stat-grid">
+          <div class="anki-stat"><span class="n">${stats.due}</span><span class="l">Vadesi gelen</span></div>
+          <div class="anki-stat"><span class="n">${stats.new}</span><span class="l">Yeni</span></div>
+          <div class="anki-stat"><span class="n">${state.cardsReviewed || 0}</span><span class="l">Toplam tekrar</span></div>
+        </div>
+      </article>
+
+      <div class="settings-actions anki-start-stack">
+        <button type="button" class="btn btn-primary" data-start="due">Çalış (${dueCards.length} kart)</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-start="new">Yalnız yeni (20)</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-start="level">Seviye kelimeleri (${levelId.toUpperCase()})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-start="custom">Benim kelimelerim (${customCards.length})</button>
+        <button type="button" class="btn btn-ghost sand-btn" data-start="patterns">Kalıplar (50)</button>
+      </div>
+
+      <p class="teacher-note">Kartı aç → hatırla → Tekrar / Zor / İyi / Kolay. Unuttukların yarın yine gelir.</p>
+    </section>`);
+
+    const pools = {
+      due: dueCards,
+      new: shuffle(newCards).slice(0, 20),
+      level: shuffle(levelCards).slice(0, 40),
+      custom: shuffle(customCards).slice(0, 40),
+      patterns: shuffle(patternCards).slice(0, 50)
+    };
+
+    section.querySelectorAll("[data-start]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        startTrainer(btn.dataset.train);
+        const pool = pools[btn.dataset.start] || [];
+        if (!pool.length) {
+          alert("Bu destede kart yok.");
+          return;
+        }
+        ankiPool = btn.dataset.start;
+        ankiSession = {
+          queue: shuffle(pool),
+          index: 0,
+          flipped: false,
+          done: 0,
+          again: 0,
+          good: 0
+        };
+        render();
+      });
+    });
+
+    return section;
+  }
+
+  function renderAnkiSession(state) {
+    const s = ankiSession;
+    if (!s || !s.queue.length || s.index >= s.queue.length) {
+      const done = s ? s.done : 0;
+      const again = s ? s.again : 0;
+      const good = s ? s.good : 0;
+      ankiSession = null;
+      const wrap = el(`<section class="view anki-view list-view">
+        <div class="view-intro">
+          <p class="eyebrow">Tur bitti</p>
+          <h1>${done} kart</h1>
+          <p class="lede">İyi: ${good} · Tekrar: ${again}</p>
+        </div>
+        <button type="button" class="btn btn-primary" id="anki-again-hub">Anki’ye dön</button>
+      </section>`);
+      wrap.querySelector("#anki-again-hub").onclick = () => {
+        view = "anki";
+        render();
+      };
+      return wrap;
+    }
+
+    const card = s.queue[s.index];
+    const left = s.queue.length - s.index;
+    const section = el(`<section class="view anki-view anki-study">
+      <div class="anki-top">
+        <button type="button" class="back" id="anki-exit">← Çık</button>
+        <span class="meta sand-meta">${s.index + 1}/${s.queue.length} · ${left} kaldı</span>
+      </div>
+      <button type="button" class="anki-card ${s.flipped ? "flipped" : ""}" id="anki-card" aria-label="Kartı çevir">
+        <span class="anki-kind">${escapeHtml(card.kind || "")}</span>
+        <span class="anki-front greek-line">${escapeHtml(card.front)}</span>
+        ${
+          s.flipped
+            ? `<span class="anki-back">${escapeHtml(card.back)}${card.tip ? `<small>${escapeHtml(card.tip)}</small>` : ""}</span>`
+            : `<span class="anki-hint">Göster</span>`
+        }
+      </button>
+      ${
+        s.flipped
+          ? `<div class="anki-rates">
+              <button type="button" class="btn rate-again" data-rate="again">Tekrar</button>
+              <button type="button" class="btn rate-hard" data-rate="hard">Zor</button>
+              <button type="button" class="btn rate-good" data-rate="good">İyi</button>
+              <button type="button" class="btn rate-easy" data-rate="easy">Kolay</button>
+            </div>`
+          : `<p class="meta sand-meta center">Dokununca cevap açılır</p>`
+      }
+      <button type="button" class="btn btn-ghost sand-btn" id="anki-speak">Dinle</button>
+    </section>`);
+
+    section.querySelector("#anki-exit").onclick = () => {
+      ankiSession = null;
+      render();
+    };
+    section.querySelector("#anki-card").onclick = () => {
+      if (!ankiSession.flipped) {
+        ankiSession.flipped = true;
+        render();
+      }
+    };
+    section.querySelector("#anki-speak")?.addEventListener("click", () => {
+      const text = s.flipped ? String(card.back).split("\n")[0] : card.front;
+      speakGreek(card.front);
+    });
+    section.querySelectorAll("[data-rate]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const rating = btn.dataset.rate;
+        Progress.rateAnkiCard(card.key, rating);
+        ankiSession.done += 1;
+        if (rating === "again") {
+          ankiSession.again += 1;
+          // push back a few cards later
+          const insertAt = Math.min(ankiSession.queue.length, ankiSession.index + 3 + Math.floor(Math.random() * 3));
+          ankiSession.queue.splice(insertAt, 0, card);
+        } else {
+          ankiSession.good += 1;
+        }
+        ankiSession.index += 1;
+        ankiSession.flipped = false;
         render();
       });
     });
@@ -425,7 +932,8 @@ const App = (() => {
 
   function openLesson(taskId, fromView) {
     activeTaskId = taskId;
-    lessonReturnView = fromView || view || "today";
+    activeAssignmentKind = activeAssignmentKind || "new";
+    lessonReturnView = "today";
     view = "lesson";
     render();
   }
@@ -433,13 +941,21 @@ const App = (() => {
   function renderLesson(state) {
     const meta = findTaskMeta(activeTaskId);
     if (!meta) {
-      view = lessonReturnView || "today";
+      view = "today";
       return renderToday(state);
     }
     const { level, unit, task } = meta;
     const lesson = typeof Lessons !== "undefined" ? Lessons.get(task.id) : null;
-    const done = Progress.isDone(task.id);
+    const isReview = activeAssignmentKind === "review";
+    const assign = Progress.nextTeacherAssignment();
+    const reason =
+      isReview && assign && assign.assignment && assign.assignment.id === activeAssignmentId
+        ? assign.reason
+        : isReview
+          ? (CURRICULUM.pedagogy?.reviewReasons?.interleave || "Tekrar zamanı.")
+          : "";
     const typeLabel = (CURRICULUM.typeLabels && CURRICULUM.typeLabels[task.type]) || task.type;
+    const mins = isReview ? Math.max(10, Math.round((task.minutes || 20) * 0.55)) : task.minutes;
 
     const theoryHtml = (lesson?.theory || [task.detail])
       .map((p) => {
@@ -455,21 +971,44 @@ const App = (() => {
       })
       .join("");
     const examples = lesson?.examples || [];
-    const steps = lesson?.steps || [];
-    const practice = lesson?.practice || [];
-    const check = lesson?.check || [];
-    const table = lesson?.table;
+    const steps = isReview
+      ? [
+          "Kitaba bakmadan: konuyu 3 cümleyle Türkçe özetle.",
+          "Örneklerden en az 3 tanesini ezbere Yunanca söyle (dokunup dinle, sonra sen).",
+          "Aynı kalıpla 2 yeni cümle üret (kendi hayatından).",
+          "Zayıf hissettiğin noktayı bir satır not et — yarın yine sorabilirim."
+        ]
+      : lesson?.steps || [];
+    const practice = isReview ? [] : lesson?.practice || [];
+    const check = isReview
+      ? [
+          "Ezbere en az 3 örnek söyleyebildim.",
+          "Kendi 2 cümlemi kurdum.",
+          "Karışık nokta varsa kelime/kalıp listesine ekledim."
+        ]
+      : lesson?.check || [];
+    const table = isReview ? null : lesson?.table;
 
-    const section = el(`<section class="view lesson-view">
+    const section = el(`<section class="view lesson-view ${isReview ? "lesson-review" : ""}">
       <button class="back" id="lesson-back">← Geri</button>
       <header class="lesson-hero">
-        <p class="eyebrow">${escapeHtml(level.code)} · ${escapeHtml(unit.title)} · ${escapeHtml(typeLabel)} · ~${task.minutes} dk</p>
-        <h1>${escapeHtml(task.title)}</h1>
-        <p class="lede">${escapeHtml(lesson?.goal || task.detail)}</p>
+        <p class="eyebrow">${isReview ? "Tekrar · " : ""}${escapeHtml(level.code)} · ${escapeHtml(unit.title)} · ${escapeHtml(typeLabel)} · ~${mins} dk</p>
+        <h1>${isReview ? "Tekrar: " : ""}${escapeHtml(task.title)}</h1>
+        <p class="lede">${escapeHtml(isReview ? reason || task.detail : lesson?.goal || task.detail)}</p>
       </header>
 
+      ${
+        isReview
+          ? `<article class="lesson-block review-why">
+              <h2>Neden tekrar?</h2>
+              <p class="lesson-p">${escapeHtml(reason)}</p>
+              <p class="lesson-p">Ağırlık: ${Progress.taskWeight(task)}/6 · Aralıklı tekrar ile kalıcılaştırıyoruz.</p>
+            </article>`
+          : ""
+      }
+
       <article class="lesson-block">
-        <h2>Konu</h2>
+        <h2>${isReview ? "Hızlı hatırlatma" : "Konu"}</h2>
         ${theoryHtml}
       </article>
 
@@ -499,7 +1038,7 @@ const App = (() => {
       ${
         steps.length
           ? `<article class="lesson-block">
-              <h2>Şimdi yap</h2>
+              <h2>${isReview ? "Tekrar adımları" : "Şimdi yap"}</h2>
               <ol class="lesson-steps">${steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ol>
             </article>`
           : ""
@@ -524,8 +1063,10 @@ const App = (() => {
       }
 
       <div class="lesson-actions">
-        ${lesson?.train ? `<button type="button" class="btn btn-ghost" id="lesson-train">İlgili antrenman</button>` : ""}
-        <button type="button" class="btn btn-primary" id="lesson-done">${done ? "Tamamlandı ✓ (geri al)" : "Dersi tamamladım"}</button>
+        ${!isReview && lesson?.train ? `<button type="button" class="btn btn-ghost" id="lesson-train">İlgili antrenman</button>` : ""}
+        <button type="button" class="btn btn-primary" id="lesson-done">${
+          isReview ? "Tekrarı tamamladım" : "Dersi tamamladım"
+        }</button>
       </div>
     </section>`);
 
@@ -545,11 +1086,21 @@ const App = (() => {
 
     section.querySelector("#lesson-back").onclick = () => {
       activeTaskId = null;
-      view = lessonReturnView || "today";
+      activeAssignmentId = null;
+      activeAssignmentKind = null;
+      view = "today";
       render();
     };
     section.querySelector("#lesson-done").onclick = () => {
-      Progress.toggleTask(task.id, task.minutes || 0);
+      if (activeAssignmentId) {
+        Progress.completeAssignment(activeAssignmentId);
+      } else if (!isReview) {
+        Progress.toggleTask(task.id, task.minutes || 0);
+      }
+      activeTaskId = null;
+      activeAssignmentId = null;
+      activeAssignmentKind = null;
+      view = "today";
       render();
     };
     section.querySelector("#lesson-train")?.addEventListener("click", () => {
@@ -557,6 +1108,7 @@ const App = (() => {
       render();
     });
 
+    bindScrollTop(section);
     return section;
   }
 
@@ -1667,7 +2219,8 @@ const App = (() => {
       };
     }
     if (mode === "pattern") {
-      const bank = typeof PATTERNS !== "undefined" ? PATTERNS.bank : [];
+      const bank = collectAllPatterns(Progress.load());
+      if (!bank.length) return null;
       const item = bank[Math.floor(Math.random() * bank.length)];
       const askFrame = Math.random() < 0.5;
       if (askFrame) {
@@ -1696,7 +2249,8 @@ const App = (() => {
       };
     }
     if (mode === "patternfill") {
-      const bank = typeof PATTERNS !== "undefined" ? PATTERNS.bank : [];
+      const bank = collectAllPatterns(Progress.load());
+      if (!bank.length) return null;
       const item = bank[Math.floor(Math.random() * bank.length)];
       return {
         kind: "patternfill",
@@ -2144,11 +2698,7 @@ const App = (() => {
       render();
     });
     wrap.querySelector("#train-exit").addEventListener("click", () => {
-      trainerMode = null;
-      trainerQ = null;
-      trainerFeedback = null;
-      challengeQueue = [];
-      view = "today";
+      finishTrainerSession();
       render();
     });
     return wrap;
@@ -2310,10 +2860,10 @@ const App = (() => {
       </details>`;
   }
 
-  function renderPatternsBank() {
-    const bank = typeof PATTERNS !== "undefined" && Array.isArray(PATTERNS.bank) ? PATTERNS.bank : [];
-    const cats = [...new Set(bank.map((p) => p.cat))].sort((a, b) => a.localeCompare(b, "tr"));
-    const levels = [...new Set(bank.map((p) => p.level))].sort((a, b) => {
+  function renderPatternsBank(state) {
+    const bank = collectAllPatterns(state || Progress.load());
+    const cats = [...new Set(bank.map((p) => p.cat).filter(Boolean))].sort((a, b) => a.localeCompare(b, "tr"));
+    const levels = [...new Set(bank.map((p) => p.level).filter(Boolean))].sort((a, b) => {
       const order = ["a0", "a1", "a2", "b1", "b2", "c1", "c2"];
       return order.indexOf(a) - order.indexOf(b);
     });
@@ -2340,42 +2890,62 @@ const App = (() => {
       )
       .join("");
 
-    const section = el(`<section class="view patterns-view">
+    const section = el(`<section class="view patterns-view list-view">
       <div class="view-intro">
-        <p class="eyebrow">Cümle iskeletleri</p>
-        <h1>Kalıp bankası</h1>
-        <p class="lede">${bank.length} kalıp · gösterilen ${filtered.length}</p>
+        <p class="eyebrow">Liste</p>
+        <h1>Kalıplar</h1>
+        <p class="lede">${bank.length} kalıp · ${filtered.length} gösteriliyor</p>
       </div>
+
+      <form class="add-form sand-panel" id="add-pattern-form">
+        <p class="add-form-title">Kalıp ekle</p>
+        <label><span>İskelet</span><input name="frame" required maxlength="120" autocomplete="off" placeholder="Θέλω + nesne" /></label>
+        <label><span>Örnek (Yunanca)</span><input name="eg" required maxlength="160" autocomplete="off" placeholder="Θέλω έναν καφέ." /></label>
+        <label><span>Türkçe</span><input name="tr" maxlength="160" autocomplete="off" placeholder="… istiyorum" /></label>
+        <div class="pattern-filter-row">
+          <label><span>Kategori</span><input name="cat" maxlength="40" autocomplete="off" placeholder="benim" value="benim" /></label>
+          <label><span>Seviye</span>
+            <select name="level">
+              ${["a0", "a1", "a2", "b1", "b2", "c1", "c2"].map((lv) => `<option value="${lv}" ${lv === "a1" ? "selected" : ""}>${lv.toUpperCase()}</option>`).join("")}
+            </select>
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary">Ekle</button>
+      </form>
+
       <div class="pattern-filters">
-        <input type="search" id="pattern-q" class="pattern-search" placeholder="Ara: iskelet, örnek, Türkçe…" value="${escapeHtml(
+        <input type="search" id="pattern-q" class="pattern-search" placeholder="Ara…" value="${escapeHtml(
           patternSearch
         )}" autocomplete="off" />
         <div class="pattern-filter-row">
           <select id="pattern-cat" aria-label="Kategori">${catOptions}</select>
           <select id="pattern-level" aria-label="Seviye">${levelOptions}</select>
         </div>
-        <div class="launch-stack launch-slim" style="margin-top:8px">
-          <button type="button" class="btn btn-ghost sand-btn" id="pattern-train-go">Kalıp antrenmanı</button>
-          <button type="button" class="btn btn-ghost sand-btn" id="pattern-fill-go">Kalıp doldur</button>
-        </div>
       </div>
       <ul class="pattern-list" id="pattern-list"></ul>
-      ${filtered.length ? "" : `<p class="meta sand-meta">Eşleşen kalıp yok. Filtreyi temizle.</p>`}
+      ${filtered.length ? "" : `<p class="meta sand-meta">Eşleşen kalıp yok.</p>`}
     </section>`);
 
     const list = section.querySelector("#pattern-list");
-    filtered.forEach((p, i) => {
+    filtered.forEach((p) => {
       const li = el(`<li class="pattern-item">
-        <button type="button" class="pattern-card" data-i="${i}">
-          <span class="pattern-meta"><span class="pill muted">${escapeHtml(
-            String(p.level || "").toUpperCase()
-          )}</span><span class="pill muted">${escapeHtml(p.cat || "")}</span></span>
-          <strong class="pattern-frame">${escapeHtml(p.frame)}</strong>
-          <span class="pattern-eg">${escapeHtml(p.eg)}</span>
-          <span class="pattern-tr">${escapeHtml(p.tr)}</span>
-        </button>
+        <div class="pattern-card word-row">
+          <button type="button" class="word-speak">
+            <span class="pattern-meta"><span class="pill muted">${escapeHtml(
+              String(p.level || "").toUpperCase()
+            )}</span><span class="pill muted">${escapeHtml(p.cat || "")}</span>${p.custom ? `<span class="pill muted">benim</span>` : ""}</span>
+            <strong class="pattern-frame">${escapeHtml(p.frame)}</strong>
+            <span class="pattern-eg">${escapeHtml(p.eg)}</span>
+            <span class="pattern-tr">${escapeHtml(p.tr || "")}</span>
+          </button>
+          ${p.custom ? `<button type="button" class="btn-del" data-del="${escapeHtml(p.id)}" aria-label="Sil">Sil</button>` : ""}
+        </div>
       </li>`);
-      li.querySelector("button").addEventListener("click", () => speakGreek(p.eg));
+      li.querySelector(".word-speak").addEventListener("click", () => speakGreek(p.eg));
+      li.querySelector("[data-del]")?.addEventListener("click", () => {
+        Progress.removeCustomPattern(p.id);
+        render();
+      });
       list.appendChild(li);
     });
 
@@ -2393,12 +2963,18 @@ const App = (() => {
     });
     section.querySelector("#pattern-cat").addEventListener("change", applyFilters);
     section.querySelector("#pattern-level").addEventListener("change", applyFilters);
-    section.querySelector("#pattern-train-go").addEventListener("click", () => {
-      startTrainer("pattern");
-      render();
-    });
-    section.querySelector("#pattern-fill-go").addEventListener("click", () => {
-      startTrainer("patternfill");
+
+    section.querySelector("#add-pattern-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      Progress.addCustomPattern({
+        frame: fd.get("frame"),
+        eg: fd.get("eg"),
+        tr: fd.get("tr"),
+        cat: fd.get("cat"),
+        level: fd.get("level")
+      });
+      patternSearch = "";
       render();
     });
 
