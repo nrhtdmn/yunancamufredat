@@ -515,17 +515,20 @@ const App = (() => {
       });
     });
     (state.customWords || []).forEach((w) => built.push({ ...w, custom: true }));
-    return built;
+    return built.map((w, i) => ({ ...w, n: w.n || i + 1 }));
   }
 
   function collectAllPatterns(state) {
     const bank = typeof PATTERNS !== "undefined" && Array.isArray(PATTERNS.bank) ? PATTERNS.bank : [];
     const built = bank.map((p, i) => ({
       ...p,
+      n: p.n || i + 1,
       id: p.id || `sys_p_${i}`,
       custom: false
     }));
-    (state.customPatterns || []).forEach((p) => built.push({ ...p, custom: true }));
+    (state.customPatterns || []).forEach((p, i) =>
+      built.push({ ...p, n: p.n || bank.length + i + 1, custom: true })
+    );
     return built;
   }
 
@@ -561,6 +564,7 @@ const App = (() => {
       const li = el(`<li class="pattern-item">
         <div class="pattern-card word-row">
           <button type="button" class="word-speak">
+            <span class="item-num">#${w.n}</span>
             <strong class="pattern-frame">${escapeHtml(w.el)}</strong>
             <span class="pattern-tr">${escapeHtml(w.tr)}</span>
             ${w.tip ? `<span class="pattern-eg">${escapeHtml(w.tip)}</span>` : ""}
@@ -2931,7 +2935,7 @@ const App = (() => {
       const li = el(`<li class="pattern-item">
         <div class="pattern-card word-row">
           <button type="button" class="word-speak">
-            <span class="pattern-meta"><span class="pill muted">${escapeHtml(
+            <span class="pattern-meta"><span class="item-num">#${p.n}</span><span class="pill muted">${escapeHtml(
               String(p.level || "").toUpperCase()
             )}</span><span class="pill muted">${escapeHtml(p.cat || "")}</span>${p.custom ? `<span class="pill muted">benim</span>` : ""}</span>
             <strong class="pattern-frame">${escapeHtml(p.frame)}</strong>
